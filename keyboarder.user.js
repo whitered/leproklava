@@ -121,6 +121,7 @@ function createController()
     var dirtyMainContentHolderClass = isLepra ? "" : "js-posts_holder";
     var headCommentClass = "indent_0";
     var newCommentClass = "new";
+    var toggleUserClass = "c_show_user";
     
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
@@ -229,7 +230,15 @@ function createController()
         return document.getElementById(comment_id);
       }
     };
-        
+    
+    
+    
+    var clickLink = function(link)
+    {
+      var theEvent = document.createEvent("MouseEvent");
+      theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+      link.dispatchEvent(theEvent);
+    };   
         
         
     var ctrl = {
@@ -353,7 +362,14 @@ function createController()
       
       toggleUser: function()
       {
-        trace("toggle user");
+        if(current)
+        {
+          var links = utils.getElementsByClass(toggleUserClass, current, "a");
+          if(links.length > 0)
+          {
+            clickLink(links[0]);
+          }
+        }
       },
       
       
