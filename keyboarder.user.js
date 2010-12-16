@@ -12,6 +12,7 @@ var utils = {
   
   hasClass: function(ele,cls)
   {
+    if(!ele) return false;
     var pattern = new RegExp("(\\s|^)" + cls + "(\\s|$)");
     return pattern.test(ele.className);
   },
@@ -108,7 +109,7 @@ var utils = {
  
 
 
-function createNavigation()
+function createController()
 {
     var currentClass = "kb-current";
   
@@ -118,6 +119,8 @@ function createNavigation()
     var commentClass = isLepra ? "post" : "comment";
     var parentLinkClass = isLepra ? "show_parent" : "c_parent";
     var dirtyMainContentHolderClass = isLepra ? "" : "js-posts_holder";
+    var headCommentClass = "indent_0";
+    var newCommentClass = "new";
     
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
@@ -130,172 +133,264 @@ function createNavigation()
     var comments = insidePost ? utils.getElementsByClass(commentClass, commentsHolder, "div") : null;
     
 
-    var css = ".kb-current { border: 1px solid #33c; }";
-    var style = document.createElement("style");
-    style.type = "text/css";
-    style.innerHTML = css;
-    document.getElementsByTagName('head')[0].appendChild(style);
+    var current = null;
+    var history = [];
+        
+    var isPost = function(node)
+    {
+      //return node && node.nodeType == 1 && utils.hasClass(node, postClass);
+      return utils.hasClass(node, postClass);
+    };
+        
+        
+        
+    var isComment = function(node)
+    {
+      //return node && node.nodeType == 1 && utils.hasClass(node, commentClass);
+      return utils.hasClass(node, commentClass);
+    };
     
-    return {
-        
-        current: null,
-        
-        
-        
-        isPost: function(node)
+    
+    
+    var moveTo = function(node)
+    {
+      history.push(current);
+      setCurrent(node);
+    }
+    
+    
+    
+    var setCurrent = function(node)
+    {
+      if(current)
+      {
+        utils.removeClass(current, currentClass);
+      }
+      
+      current = node;
+      trace("current = " + (node));
+      
+      if(current)
+      {
+        utils.addClass(current, currentClass);
+        var offset = (window.innerHeight - current.offsetHeight) / 2;
+        utils.scrollPosition(utils.elementPosition(current).y - offset);
+      }
+    };
+    
+    
+    
+    var getNext = function(node)
+    {
+      if(insidePost && isPost(node))
+      {
+        return comments[0];
+      }
+      else
+      {
+        do
         {
-          return node && node.nodeType == 1 && utils.hasClass(node, postClass);
-        },
-        
-        
-        
-        isComment: function(node)
+          node = node.nextSibling;
+        } 
+        while (node && !isComment(node) && !isPost(node));
+        return node;
+      }
+    };
+    
+    
+    
+    var getPrev = function(node)
+    {
+      if(insidePost && isPost(node))
+      {
+        return null;
+      }
+      else
+      {
+        do
         {
-          return node && node.nodeType == 1 && utils.hasClass(node, commentClass);
-        },
-        
-        
-        
-        isNew: function(node)
-        {
-          return utils.hasClass(node || this.current, "new");
-        },
-        
-        
-        
-        setCurrent: function(node)
-        {
-          if(this.current)
-          {
-            utils.removeClass(this.current, currentClass);
-          }
-          
-          this.current = node;
-          trace("current = " + (node));
-          
-          if(this.current)
-          {
-            utils.addClass(this.current, currentClass);
-            var offset = (window.innerHeight - this.current.offsetHeight) / 2;
-            utils.scrollPosition(utils.elementPosition(this.current).y - offset);
-          }
-        },
-        
-        
-        
-        getNext: function(node)
-        {
-          var next = node || this.current;
-          if(next)
-          {
-            if(this.isPost(next) && insidePost)
-            {
-              trace("insidePost");
-              return comments[0];
-            }
-            else
-            {
-              trace("nope");
-              do
-              {
-                next = next.nextSibling;
-              } 
-              while (next && !(this.isComment(next) || this.isPost(next)));
-              return next;
-            }
-          }
-          else
-          {
-            return head;
-          }
-        },
-        
-        
-        
-        goNext: function()
-        {
-          this.setCurrent(this.getNext());
-        },
-        
-        
-        
-        goNextNew: function()
-        {
-          var next = this.getNext();
-          while(next && !this.isNew(next))
-          {
-            next = this.getNext(next);
-          }
-          setCurrent(next);
-        },
-        
-        
-        
-        goParent: function()
-        {
-          if(this.isComment(this.current))
-          {
-            //TODO: find parent comment
-          }
-        },
-        
-        
-        
-        goNextHead: function()
-        {
-        },
-        
-        
-        
-        goPrevHead: function()
-        {
-        },
-        
-        
-        
-        goBack: function()
-        {
-        },
-        
-        
-        
-        goTop: function()
-        {
-        },
-        
-        
-        
-        rateUp: function()
-        {
-        },
-        
-        
-        
-        rateDown: function()
-        {
-        },
-        
-        
-        
-        toggleUser: function()
-        {
-        },
-        
-        
-        
-        toPost: function(newTab)
-        {
+          node = node.previousSibling;
         }
+        while (node && !isComment(node) && !isPost(node));
+        return node;
+      }
+    }
+    
+    
+    
+    var getParent = function(comment)
+    {
+      trace("getParent");
+      const links = utils.getElementsByClass(parentLinkClass, comment, "a");
+      if(links.length > 0)
+      {
+        var comment_id = links[0].getAttribute("replyto");
+        trace("comment_id=" + comment_id);
+        return document.getElementById(comment_id);
+      }
+    };
+        
+        
+        
+    var ctrl = {
+        
+      goNext: function()
+      {
+        if(current)
+        {
+          var next = getNext(current);
+          if(next) moveTo(next);
+        }
+        else
+        {
+          moveTo(head);
+        }
+      },
+      
+      
+      
+      goNextNew: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getNext(node);
+          }
+          while(node && !utils.hasClass(node, newCommentClass));
+          if(node) moveTo(next);
+        }
+        else
+        {
+          this.goNext();
+        }
+      },
+      
+      
+      
+      goParent: function()
+      {
+        if(isComment(current))
+        {
+          var parent = getParent(current);
+          if(parent) moveTo(parent);
+        }
+      },
+      
+      
+      
+      goNextHead: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getNext(node);
+          }
+          while(node && !utils.hasClass(node, headCommentClass));
+          if(node) moveTo(node);
+        }
+        else
+        {
+          this.goNext();
+        }
+      },
+      
+      
+      
+      goPrevHead: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getPrev(node);
+          }
+          while(node && !utils.hasClass(node, headCommentClass));
+          if(node) moveTo(node);
+        }
+        else
+        {
+          this.goPrev();
+        }
+      },
+      
+      
+      
+      goBack: function()
+      {
+        if(history.length > 0)
+        {
+          setCurrent(history.pop());
+        }
+      },
+      
+      
+      
+      goTop: function()
+      {
+        moveTo(head);
+      },
+      
+      
+      
+      rateUp: function()
+      {
+        trace("rate up");
+      },
+      
+      
+      
+      rateDown: function()
+      {
+        trace("rate down");
+      },
+      
+      
+      
+      toggleUser: function()
+      {
+        trace("toggle user");
+      },
+      
+      
+      
+      goInside: function(newTab)
+      {
+        trace("go inside");
+      }
         
     };
+    
+    return ctrl;
 }
 
 
 
 function initNavigation()
 {
-  var nav = createNavigation();
-  shortcut.add("n", function(){ nav.goNext(); });
+  var css = ".kb-current { border: 1px dotted #556E8C; }";
+  var style = document.createElement("style");
+  style.type = "text/css";
+  style.innerHTML = css;
+  document.getElementsByTagName('head')[0].appendChild(style);
+    
+  var controller = createController();
+  
+  shortcut.add("n", controller.goNext);
+  shortcut.add("m", controller.goNextNew);
+  shortcut.add("v", controller.goParent);
+  shortcut.add(".", controller.goNextHead);
+  shortcut.add(",", controller.goPrevHead);
+  shortcut.add("b", controller.goBack);
+  shortcut.add("h", controller.goTop);
+  shortcut.add("=", controller.rateUp);
+  shortcut.add("-", controller.rateDown);
+  shortcut.add("u", controller.toggleUser);
+  shortcut.add("i", controller.goInside);
 }
 
 
