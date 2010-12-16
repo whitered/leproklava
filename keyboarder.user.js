@@ -122,6 +122,7 @@ function createController()
     var headCommentClass = "indent_0";
     var newCommentClass = "new";
     var toggleUserClass = "c_show_user";
+    var itemLinkClass = "c_icon";
     
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
@@ -272,7 +273,7 @@ function createController()
         }
         else
         {
-          this.goNext();
+          ctrl.goNext();
         }
       },
       
@@ -303,7 +304,7 @@ function createController()
         }
         else
         {
-          this.goNext();
+          ctrl.goNext();
         }
       },
       
@@ -323,7 +324,7 @@ function createController()
         }
         else
         {
-          this.goPrev();
+          ctrl.goPrev();
         }
       },
       
@@ -376,7 +377,14 @@ function createController()
       
       goInside: function(newTab)
       {
-        trace("go inside");
+        if(current)
+        {
+          var links = utils.getElementsByClass(itemLinkClass, current, "a");
+          if(links.length > 0)
+          {
+            document.location.href = links[0].href;
+          }
+        }
       }
         
     };
@@ -396,17 +404,17 @@ function initNavigation()
     
   var controller = createController();
   
-  shortcut.add("n", controller.goNext);
-  shortcut.add("m", controller.goNextNew);
-  shortcut.add("v", controller.goParent);
-  shortcut.add(".", controller.goNextHead);
-  shortcut.add(",", controller.goPrevHead);
-  shortcut.add("b", controller.goBack);
-  shortcut.add("h", controller.goTop);
-  shortcut.add("=", controller.rateUp);
-  shortcut.add("-", controller.rateDown);
-  shortcut.add("u", controller.toggleUser);
-  shortcut.add("i", controller.goInside);
+  shortcut.add("n", controller.goNext, {disable_in_input: true});
+  shortcut.add("m", controller.goNextNew, {disable_in_input: true});
+  shortcut.add("v", controller.goParent, {disable_in_input: true});
+  shortcut.add(".", controller.goNextHead, {disable_in_input: true});
+  shortcut.add(",", controller.goPrevHead, {disable_in_input: true});
+  shortcut.add("b", controller.goBack, {disable_in_input: true});
+  shortcut.add("h", controller.goTop, {disable_in_input: true});
+  shortcut.add("=", controller.rateUp, {disable_in_input: true});
+  shortcut.add("-", controller.rateDown, {disable_in_input: true});
+  shortcut.add("u", controller.toggleUser, {disable_in_input: true});
+  shortcut.add("i", controller.goInside, {disable_in_input: true});
 }
 
 
