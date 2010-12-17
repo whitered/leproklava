@@ -394,27 +394,78 @@ function createController()
 
 
 
+
+
 function initNavigation()
 {
   var css = ".kb-current { border: 1px dotted #556E8C; }";
+  css += "\n#kb-help { position: fixed; background: #ccc; padding: 1em;}";
+  css += "\n#kb-help dt { float: left; width: 2em; font-weight: bold; }";
+  css += "\n#kb-help dd { margin: 0.5em 0;}"
+  
   var style = document.createElement("style");
   style.type = "text/css";
   style.innerHTML = css;
   document.getElementsByTagName('head')[0].appendChild(style);
     
+  var toggleHelp = function()
+  {
+    var content = document.getElementById("kb-help");
+    if(content)
+    {
+      content.parentNode.removeChild(content);
+      return;
+    }
+    
+    var values = [
+      ["h", "Показать/скрыть окно помощи"],
+      ["n", "Следующий пост или комментарий"],
+      ["m", "Следующий пост или новый комментарий"],
+      ["v", "Родительский комментарий"],
+      [",", "Предыдущий пост или комментарий 1-го уровня"],
+      [".", "Следующий пост или комментарий 1-го уровня"],
+      ["b", "Назад"],
+      ["t", "Первый пост на странице"],
+      ["-", "Минус"],
+      ["=", "Плюс"],
+      ["u", "Выделить все комментарии автора"],
+      ["i", "Войти в пост"]
+    ];
+    content = document.createElement("div");
+    var dl = content.appendChild(document.createElement("dl"));
+    var dt;
+    var dd;
+    for (var i = 0; i < values.length; i++)
+    {
+       dt = document.createElement("dt");
+       dt.appendChild(document.createTextNode(values[i][0]));
+       dl.appendChild(dt);
+       
+       dd = document.createElement("dd");
+       dd.appendChild(document.createTextNode(values[i][1]));
+       dl.appendChild(dd);
+    }
+    document.getElementsByTagName("body")[0].appendChild(content);
+    
+    content.id = "kb-help";
+    content.style.left = ((window.innerWidth - content.clientWidth) / 2) + "px";
+    content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px"; 
+  };
+
   var controller = createController();
   
-  shortcut.add("n", controller.goNext, {disable_in_input: true});
-  shortcut.add("m", controller.goNextNew, {disable_in_input: true});
-  shortcut.add("v", controller.goParent, {disable_in_input: true});
-  shortcut.add(".", controller.goNextHead, {disable_in_input: true});
-  shortcut.add(",", controller.goPrevHead, {disable_in_input: true});
-  shortcut.add("b", controller.goBack, {disable_in_input: true});
-  shortcut.add("h", controller.goTop, {disable_in_input: true});
-  shortcut.add("=", controller.rateUp, {disable_in_input: true});
-  shortcut.add("-", controller.rateDown, {disable_in_input: true});
-  shortcut.add("u", controller.toggleUser, {disable_in_input: true});
-  shortcut.add("i", controller.goInside, {disable_in_input: true});
+  shortcut.add("n", controller.goNext, { disable_in_input: true });
+  shortcut.add("m", controller.goNextNew, { disable_in_input: true });
+  shortcut.add("v", controller.goParent, { disable_in_input: true });
+  shortcut.add(",", controller.goPrevHead, { disable_in_input: true });
+  shortcut.add(".", controller.goNextHead, { disable_in_input: true });
+  shortcut.add("b", controller.goBack, { disable_in_input: true });
+  shortcut.add("t", controller.goTop, { disable_in_input: true });
+  shortcut.add("-", controller.rateDown, { disable_in_input: true });
+  shortcut.add("=", controller.rateUp, { disable_in_input: true });
+  shortcut.add("u", controller.toggleUser, { disable_in_input: true });
+  shortcut.add("i", controller.goInside, { disable_in_input: true });
+  shortcut.add("h", toggleHelp, { disable_in_input: true });
 }
 
 
