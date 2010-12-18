@@ -185,8 +185,11 @@ function createController()
 
       if(current)
       {
+        var links = current.getElementsByTagName("a");
+        links[0].focus();
         utils.addClass(current, currentClass);
         var offset = (window.innerHeight - current.offsetHeight) / 2;
+        if(offset < 0) offset = 0;
         utils.scrollPosition(utils.elementPosition(current).y - offset);
       }
     };
@@ -298,7 +301,7 @@ function createController()
             node = getNext(node);
           }
           while(node && !utils.hasClass(node, newCommentClass));
-          if(node) moveTo(next);
+          if(node) moveTo(node);
         }
         else
         {
@@ -411,6 +414,13 @@ function createController()
           var url = getItemLink(current);
           if(url) document.location.href = url;
         }
+      },
+      
+      
+      
+      goGlagne: function()
+      {
+        document.location.href = "/";
       }
 
     };
@@ -455,7 +465,8 @@ function initNavigation()
       ["-", "Минус"],
       ["=", "Плюс"],
       ["u", "Выделить все комментарии автора"],
-      ["o", "Открыть пост"]
+      ["o", "Открыть пост"],
+      ["g", "На глагне"]
     ];
     content = document.createElement("div");
     var dl = content.appendChild(document.createElement("dl"));
@@ -492,6 +503,7 @@ function initNavigation()
   addHotkey(85, controller.toggleUser);
   addHotkey(79, controller.goInside);
   addHotkey(72, toggleHelp);
+  addHotkey(71, controller.goGlagne);
 }
 
 
@@ -501,7 +513,7 @@ var hotkey = {
   
   init: function()
   {
-    var listener = function(e)
+    var onKeydown = function(e)
     {
       var e = e || window.event;
       
@@ -525,11 +537,9 @@ var hotkey = {
       }
       
       return true;
-    }
+    };
     
-    if(document.addEventListener) document.addEventListener("keydown", listener, false);
-    else if(document.attachEvent) document.attachEvent("onkeydown", listener);
-    else document.onkeydown = listener;
+   document.addEventListener("keydown", onKeydown, false);
   },
   
   
