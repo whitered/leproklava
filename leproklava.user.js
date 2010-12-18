@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           Keyboarder
+// @name           leproklava
 // @namespace      ru.whitered
 // @require        http://www.openjs.com/scripts/events/keyboard_shortcuts/shortcut.js
 // @include        http://dirty.ru/*
@@ -9,23 +9,23 @@
 // ==/UserScript==
 
 var utils = {
-  
+
   hasClass: function(ele,cls)
   {
     if(!ele) return false;
     var pattern = new RegExp("(\\s|^)" + cls + "(\\s|$)");
     return pattern.test(ele.className);
   },
-  
-  
-  
+
+
+
   addClass: function(ele,cls)
   {
     if (!this.hasClass(ele,cls)) ele.className += " " + cls;
   },
-  
-  
-  
+
+
+
   removeClass: function(ele,cls)
   {
     if (this.hasClass(ele,cls))
@@ -104,17 +104,17 @@ var utils = {
     }
     return {x:x, y:y};
   }
-  
+
 };
- 
+
 
 
 function createController()
 {
     var currentClass = "kb-current";
-  
+
     var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
-    
+
     var postClass = "post";
     var commentClass = isLepra ? "post" : "comment";
     var parentLinkClass = isLepra ? "show_parent" : "c_parent";
@@ -123,55 +123,55 @@ function createController()
     var newCommentClass = "new";
     var toggleUserClass = "c_show_user";
     var itemLinkClass = "c_icon";
-    
+
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
-    
+
     var insidePost = commentsHolder != null;
     trace("insidePost = " + insidePost);
-    
+
     var posts = utils.getElementsByClass(postClass, postsHolder, "div");
     var head = posts[0];
     var comments = insidePost ? utils.getElementsByClass(commentClass, commentsHolder, "div") : null;
-    
+
 
     var current = null;
     var history = [];
-        
+
     var isPost = function(node)
     {
       //return node && node.nodeType == 1 && utils.hasClass(node, postClass);
       return utils.hasClass(node, postClass);
     };
-        
-        
-        
+
+
+
     var isComment = function(node)
     {
       //return node && node.nodeType == 1 && utils.hasClass(node, commentClass);
       return utils.hasClass(node, commentClass);
     };
-    
-    
-    
+
+
+
     var moveTo = function(node)
     {
       history.push(current);
       setCurrent(node);
     }
-    
-    
-    
+
+
+
     var setCurrent = function(node)
     {
       if(current)
       {
         utils.removeClass(current, currentClass);
       }
-      
+
       current = node;
       trace("current = " + (node));
-      
+
       if(current)
       {
         utils.addClass(current, currentClass);
@@ -179,9 +179,9 @@ function createController()
         utils.scrollPosition(utils.elementPosition(current).y - offset);
       }
     };
-    
-    
-    
+
+
+
     var getNext = function(node)
     {
       if(insidePost && isPost(node))
@@ -193,14 +193,14 @@ function createController()
         do
         {
           node = node.nextSibling;
-        } 
+        }
         while (node && !isComment(node) && !isPost(node));
         return node;
       }
     };
-    
-    
-    
+
+
+
     var getPrev = function(node)
     {
       if(insidePost && isPost(node))
@@ -217,9 +217,9 @@ function createController()
         return node;
       }
     }
-    
-    
-    
+
+
+
     var getParent = function(comment)
     {
       trace("getParent");
@@ -231,19 +231,19 @@ function createController()
         return document.getElementById(comment_id);
       }
     };
-    
-    
-    
+
+
+
     var clickLink = function(link)
     {
       var theEvent = document.createEvent("MouseEvent");
       theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
       link.dispatchEvent(theEvent);
-    };   
-        
-        
+    };
+
+
     var ctrl = {
-        
+
       goNext: function()
       {
         if(current)
@@ -256,9 +256,9 @@ function createController()
           moveTo(head);
         }
       },
-      
-      
-      
+
+
+
       goNextNew: function()
       {
         if(insidePost)
@@ -276,9 +276,9 @@ function createController()
           ctrl.goNext();
         }
       },
-      
-      
-      
+
+
+
       goParent: function()
       {
         if(isComment(current))
@@ -287,9 +287,9 @@ function createController()
           if(parent) moveTo(parent);
         }
       },
-      
-      
-      
+
+
+
       goNextHead: function()
       {
         if(insidePost)
@@ -307,9 +307,9 @@ function createController()
           ctrl.goNext();
         }
       },
-      
-      
-      
+
+
+
       goPrevHead: function()
       {
         if(insidePost)
@@ -327,9 +327,9 @@ function createController()
           ctrl.goPrev();
         }
       },
-      
-      
-      
+
+
+
       goBack: function()
       {
         if(history.length > 0)
@@ -337,30 +337,30 @@ function createController()
           setCurrent(history.pop());
         }
       },
-      
-      
-      
+
+
+
       goTop: function()
       {
         moveTo(head);
       },
-      
-      
-      
+
+
+
       rateUp: function()
       {
         trace("rate up");
       },
-      
-      
-      
+
+
+
       rateDown: function()
       {
         trace("rate down");
       },
-      
-      
-      
+
+
+
       toggleUser: function()
       {
         if(current)
@@ -372,9 +372,9 @@ function createController()
           }
         }
       },
-      
-      
-      
+
+
+
       goInside: function(newTab)
       {
         if(current)
@@ -386,9 +386,9 @@ function createController()
           }
         }
       }
-        
+
     };
-    
+
     return ctrl;
 }
 
@@ -402,12 +402,12 @@ function initNavigation()
   css += "\n#kb-help { position: fixed; background: #ccc; padding: 1em;}";
   css += "\n#kb-help dt { float: left; width: 2em; font-weight: bold; }";
   css += "\n#kb-help dd { margin: 0.5em 0;}"
-  
+
   var style = document.createElement("style");
   style.type = "text/css";
   style.innerHTML = css;
   document.getElementsByTagName('head')[0].appendChild(style);
-    
+
   var toggleHelp = function()
   {
     var content = document.getElementById("kb-help");
@@ -416,7 +416,7 @@ function initNavigation()
       content.parentNode.removeChild(content);
       return;
     }
-    
+
     var values = [
       ["h", "Показать/скрыть окно помощи"],
       ["n", "Следующий пост или комментарий"],
@@ -440,20 +440,20 @@ function initNavigation()
        dt = document.createElement("dt");
        dt.appendChild(document.createTextNode(values[i][0]));
        dl.appendChild(dt);
-       
+
        dd = document.createElement("dd");
        dd.appendChild(document.createTextNode(values[i][1]));
        dl.appendChild(dd);
     }
     document.getElementsByTagName("body")[0].appendChild(content);
-    
+
     content.id = "kb-help";
     content.style.left = ((window.innerWidth - content.clientWidth) / 2) + "px";
-    content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px"; 
+    content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
   };
 
   var controller = createController();
-  
+
   shortcut.add("n", controller.goNext, { disable_in_input: true });
   shortcut.add("m", controller.goNextNew, { disable_in_input: true });
   shortcut.add("v", controller.goParent, { disable_in_input: true });
@@ -479,3 +479,4 @@ function trace(msg)
 initNavigation();
 
 trace("ready");
+
