@@ -1,7 +1,6 @@
 // ==UserScript==
 // @name           leproklava
 // @namespace      ru.whitered
-// @require        http://www.openjs.com/scripts/events/keyboard_shortcuts/shortcut.js
 // @include        http://dirty.ru/*
 // @include        http://*.dirty.ru/*
 // @include        http://leprosorium.ru/*
@@ -115,20 +114,18 @@ function createController()
 
     var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
-    var postClass = "post";
+    var postClass = isLepra ? "ord" : "post";
     var commentClass = isLepra ? "post" : "comment";
     var parentLinkClass = isLepra ? "show_parent" : "c_parent";
     var dirtyMainContentHolderClass = isLepra ? "" : "js-posts_holder";
     var headCommentClass = "indent_0";
     var newCommentClass = "new";
     var toggleUserClass = "c_show_user";
-    var itemLinkClass = "c_icon";
 
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
 
     var insidePost = commentsHolder != null;
-    trace("insidePost = " + insidePost);
 
     var posts = utils.getElementsByClass(postClass, postsHolder, "div");
     var head = posts[0];
@@ -159,11 +156,17 @@ function createController()
       history.push(current);
       setCurrent(node);
     }
-
-
+    
+    
 
     var setCurrent = function(node)
     {
+      if(current == node)
+      {
+        trace("same element");
+        return;
+      }     
+      
       if(current)
       {
         utils.removeClass(current, currentClass);
@@ -171,6 +174,14 @@ function createController()
 
       current = node;
       trace("current = " + (node));
+      
+      function traceStack(callee)
+      {
+        trace(callee);
+        if(callee.caller) traceStack(callee.caller.arguments.callee);
+      }
+      
+      //traceStack(arguments.callee);
 
       if(current)
       {
@@ -240,6 +251,24 @@ function createController()
       theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
       link.dispatchEvent(theEvent);
     };
+
+
+    var getItemLink = function(node)
+    {
+      if(isLepra)
+      {
+        var link = document.evaluate("./div[@class='dd']/div[@class='p']/span/a", node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        return link && link.href;
+      }
+      else
+      {
+        var links = utils.getElementsByClass("c_icon", current, "a");
+        if(links.length > 0)
+        {
+          return links[0].href;
+        }
+      }
+    }
 
 
     var ctrl = {
@@ -379,11 +408,8 @@ function createController()
       {
         if(current)
         {
-          var links = utils.getElementsByClass(itemLinkClass, current, "a");
-          if(links.length > 0)
-          {
-            document.location.href = links[0].href;
-          }
+          var url = getItemLink(current);
+          if(url) document.location.href = url;
         }
       }
 
@@ -429,7 +455,7 @@ function initNavigation()
       ["-", "Минус"],
       ["=", "Плюс"],
       ["u", "Выделить все комментарии автора"],
-      ["i", "Войти в пост"]
+      ["o", "Открыть пост"]
     ];
     content = document.createElement("div");
     var dl = content.appendChild(document.createElement("dl"));
@@ -453,19 +479,72 @@ function initNavigation()
   };
 
   var controller = createController();
+  
+  addHotkey(78, controller.goNext);
+  addHotkey(77, controller.goNextNew);
+  addHotkey(86, controller.goParent);
+  addHotkey(188, controller.goPrevHead);
+  addHotkey(190, controller.goNextHead);
+  addHotkey(66, controller.goBack);
+  addHotkey(84, controller.goTop);
+  addHotkey(189, controller.rateDown);
+  addHotkey(187, controller.rateUp);
+  addHotkey(85, controller.toggleUser);
+  addHotkey(79, controller.goInside);
+  addHotkey(72, toggleHelp);
+}
 
-  shortcut.add("n", controller.goNext, { disable_in_input: true });
-  shortcut.add("m", controller.goNextNew, { disable_in_input: true });
-  shortcut.add("v", controller.goParent, { disable_in_input: true });
-  shortcut.add(",", controller.goPrevHead, { disable_in_input: true });
-  shortcut.add(".", controller.goNextHead, { disable_in_input: true });
-  shortcut.add("b", controller.goBack, { disable_in_input: true });
-  shortcut.add("t", controller.goTop, { disable_in_input: true });
-  shortcut.add("-", controller.rateDown, { disable_in_input: true });
-  shortcut.add("=", controller.rateUp, { disable_in_input: true });
-  shortcut.add("u", controller.toggleUser, { disable_in_input: true });
-  shortcut.add("i", controller.goInside, { disable_in_input: true });
-  shortcut.add("h", toggleHelp, { disable_in_input: true });
+
+
+var hotkey = {
+  keys: [],
+  
+  init: function()
+  {
+    var listener = function(e)
+    {
+      var e = e || window.event;
+      
+      var element = e.target;
+      if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
+      
+      var code = e.which || e.keyCode;
+      if(hotkey.keys[code])
+      {
+        hotkey.keys[code]();
+        
+        e.cancelBubble = true;
+        e.returnValue = false;
+    
+        if (e.stopPropagation)
+        {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+        return false;
+      }
+      
+      return true;
+    }
+    
+    if(document.addEventListener) document.addEventListener("keydown", listener, false);
+    else if(document.attachEvent) document.attachEvent("onkeydown", listener);
+    else document.onkeydown = listener;
+  },
+  
+  
+  add: function(keyCode, handler)
+  {
+    hotkey.keys[keyCode] = handler;
+  }
+};
+
+
+
+
+function addHotkey(key, handler)
+{
+  hotkey.add(key, handler);
 }
 
 
@@ -475,8 +554,16 @@ function trace(msg)
   GM_log(msg);
 }
 
+try
+{
+  hotkey.init();
+  initNavigation();
+}
+catch(e)
+{
+  trace(e);
+}
 
-initNavigation();
 
 trace("ready");
 
