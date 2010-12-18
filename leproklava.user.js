@@ -407,12 +407,23 @@ function createController()
 
 
 
-      goInside: function(newTab)
+      openPost: function()
       {
         if(current)
         {
           var url = getItemLink(current);
           if(url) document.location.href = url;
+        }
+      },
+      
+      
+      
+      openPostNewTab: function()
+      {
+        if(current)
+        {
+          var url = getItemLink(current);
+          if(url) GM_openInTab(url);
         }
       },
       
@@ -489,6 +500,56 @@ function initNavigation()
     content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
   };
 
+  var  hotkeys = [];
+    
+  var onKeydown = function(e)
+  {
+    var e = e || window.event;
+    
+    var element = e.target;
+    if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
+    
+    var code = e.which || e.keyCode;
+    var handlers = hotkeys[code];
+    var mods;
+    if(handlers)
+    {
+      for(var i = handlers.length - 1; i >= 0; i--)
+      {
+        mods = handlers[i].mods;
+        if(mods.ctrl == e.ctrlKey && mods.shift == e.shiftKey && mods.alt == e.altKey)
+        {
+          handlers[i].handler();
+          
+          e.cancelBubble = true;
+          e.returnValue = false;
+      
+          if (e.stopPropagation)
+          {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+          return false;
+          
+        }
+      }
+    }
+    return true;
+  };
+  
+  document.addEventListener("keydown", onKeydown, false);
+ 
+  var addHotkey = function(keyCode, handler, modifiers)
+  {
+    var mods = {
+      shift: modifiers && modifiers.shift == true || false,
+      ctrl: modifiers && modifiers.ctrl == true || false,
+      alt: modifiers && modifiers.alt == true || false
+    };
+    if(!hotkeys[keyCode]) hotkeys[keyCode] = [];
+    hotkeys[keyCode].push({ mods: mods, handler: handler });
+  };
+  
   var controller = createController();
   
   addHotkey(78, controller.goNext);
@@ -501,60 +562,10 @@ function initNavigation()
   addHotkey(189, controller.rateDown);
   addHotkey(187, controller.rateUp);
   addHotkey(85, controller.toggleUser);
-  addHotkey(79, controller.goInside);
-  addHotkey(72, toggleHelp);
+  addHotkey(79, controller.openPost);
+  addHotkey(79, controller.openPostNewTab, { ctrl: true });
   addHotkey(71, controller.goGlagne);
-}
-
-
-
-var hotkey = {
-  keys: [],
-  
-  init: function()
-  {
-    var onKeydown = function(e)
-    {
-      var e = e || window.event;
-      
-      var element = e.target;
-      if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
-      
-      var code = e.which || e.keyCode;
-      if(hotkey.keys[code])
-      {
-        hotkey.keys[code]();
-        
-        e.cancelBubble = true;
-        e.returnValue = false;
-    
-        if (e.stopPropagation)
-        {
-          e.stopPropagation();
-          e.preventDefault();
-        }
-        return false;
-      }
-      
-      return true;
-    };
-    
-   document.addEventListener("keydown", onKeydown, false);
-  },
-  
-  
-  add: function(keyCode, handler)
-  {
-    hotkey.keys[keyCode] = handler;
-  }
-};
-
-
-
-
-function addHotkey(key, handler)
-{
-  hotkey.add(key, handler);
+  addHotkey(72, toggleHelp);
 }
 
 
@@ -564,9 +575,10 @@ function trace(msg)
   GM_log(msg);
 }
 
+
+
 try
 {
-  hotkey.init();
   initNavigation();
 }
 catch(e)
