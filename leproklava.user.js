@@ -117,10 +117,8 @@ function createController()
     var postClass = isLepra ? "ord" : "post";
     var commentClass = isLepra ? "post" : "comment";
     var parentLinkClass = isLepra ? "show_parent" : "c_parent";
-    var dirtyMainContentHolderClass = isLepra ? "" : "js-posts_holder";
     var headCommentClass = "indent_0";
     var newCommentClass = "new";
-    var toggleUserClass = "c_show_user";
 
     var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
@@ -221,6 +219,10 @@ function createController()
       {
         return null;
       }
+      else if(insidePost && node == comments[0])
+      {
+        return head;
+      }
       else
       {
         do
@@ -272,6 +274,29 @@ function createController()
         }
       }
     }
+    
+    
+    
+    var getToggleUserLink = function(node)
+    {
+      var expr = isLepra ? ".//a[@class='u']" : ".//a[@class='c_show_user']";
+      var link = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      return link;
+    }
+    
+    
+    var getVotePlusLink = function(node)
+    {
+      var expr = isLepra ? ".//a[contains(@class, 'plus')]" : ".//a[contains(@class, 'vote_button_plus')]";
+      return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    }
+
+
+    var getVoteMinusLink = function(node)
+    {
+      var expr = isLepra ? ".//a[contains(@class, 'minus')]" : ".//a[contains(@class, 'vote_button_minus')]";
+      return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    }
 
 
     var ctrl = {
@@ -286,6 +311,17 @@ function createController()
         else
         {
           moveTo(head);
+        }
+      },
+      
+      
+      
+      goPrev: function()
+      {
+        if(current)
+        {
+          var prev = getPrev(current);
+          if(prev) moveTo(prev);
         }
       },
 
@@ -381,14 +417,22 @@ function createController()
 
       rateUp: function()
       {
-        trace("rate up");
+        if(current)
+        {
+          var link = getVotePlusLink(current);
+          if(link) clickLink(link);
+        }
       },
 
 
 
       rateDown: function()
       {
-        trace("rate down");
+        if(current)
+        {
+          var link = getVoteMinusLink(current);
+          if(link) clickLink(link);
+        }
       },
 
 
@@ -397,10 +441,10 @@ function createController()
       {
         if(current)
         {
-          var links = utils.getElementsByClass(toggleUserClass, current, "a");
-          if(links.length > 0)
+          var link = getToggleUserLink(current);
+          if(link)
           {
-            clickLink(links[0]);
+            clickLink(link);
           }
         }
       },
@@ -445,7 +489,7 @@ function createController()
 
 function initNavigation()
 {
-  var css = ".kb-current { border: 1px dotted #556E8C; }";
+  var css = ".kb-current { border: 1px dashed #556E8C; }";
   css += "\n#kb-help { position: fixed; background: #ccc; padding: 1em;}";
   css += "\n#kb-help dt { float: left; width: 2em; font-weight: bold; }";
   css += "\n#kb-help dd { margin: 0.5em 0;}"
@@ -476,7 +520,7 @@ function initNavigation()
       ["-", "Минус"],
       ["=", "Плюс"],
       ["u", "Выделить все комментарии автора"],
-      ["o", "Открыть пост"],
+      ["o", "Открыть пост (ctrl - в новой вкладке)"],
       ["g", "На глагне"]
     ];
     content = document.createElement("div");
@@ -553,13 +597,17 @@ function initNavigation()
   var controller = createController();
   
   addHotkey(78, controller.goNext);
+  addHotkey(80, controller.goPrev);
   addHotkey(77, controller.goNextNew);
   addHotkey(86, controller.goParent);
   addHotkey(188, controller.goPrevHead);
   addHotkey(190, controller.goNextHead);
   addHotkey(66, controller.goBack);
   addHotkey(84, controller.goTop);
+  addHotkey(45, controller.rateDown);
+  addHotkey(109, controller.rateDown);
   addHotkey(189, controller.rateDown);
+  addHotkey(61, controller.rateUp);
   addHotkey(187, controller.rateUp);
   addHotkey(85, controller.toggleUser);
   addHotkey(79, controller.openPost);
