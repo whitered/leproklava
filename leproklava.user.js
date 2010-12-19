@@ -143,6 +143,7 @@ function createController()
 
     var isComment = function(node)
     {
+      //FIXME: on lepra post has comment's class too
       //return node && node.nodeType == 1 && utils.hasClass(node, commentClass);
       return utils.hasClass(node, commentClass);
     };
@@ -238,12 +239,10 @@ function createController()
 
     var getParent = function(comment)
     {
-      trace("getParent");
       const links = utils.getElementsByClass(parentLinkClass, comment, "a");
       if(links.length > 0)
       {
         var comment_id = links[0].getAttribute("replyto");
-        trace("comment_id=" + comment_id);
         return document.getElementById(comment_id);
       }
     };
@@ -273,7 +272,7 @@ function createController()
           return links[0].href;
         }
       }
-    }
+    };
     
     
     
@@ -282,20 +281,51 @@ function createController()
       var expr = isLepra ? ".//a[@class='u']" : ".//a[@class='c_show_user']";
       var link = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
       return link;
-    }
+    };
     
     
     var getVotePlusLink = function(node)
     {
       var expr = isLepra ? ".//a[contains(@class, 'plus')]" : ".//a[contains(@class, 'vote_button_plus')]";
       return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    }
+    };
 
 
     var getVoteMinusLink = function(node)
     {
       var expr = isLepra ? ".//a[contains(@class, 'minus')]" : ".//a[contains(@class, 'vote_button_minus')]";
       return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    };
+    
+    
+    
+    var getReplyCommentLink = function(comment)
+    {
+      var expr = isLepra ? ".//a[@class='reply_link']" : ".//a[@class='c_answer']";
+      return document.evaluate(expr, comment, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    };
+    
+    
+    
+    var commentIsHidden = function(node)
+    {
+      return utils.hasClass(node, "shrinked");
+    };
+    
+    
+    
+    var getShowCommentLink = function(comment)
+    {
+      var expr = ".//a[@class='show_link']";
+      return document.evaluate(expr, comment, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    };
+    
+    
+    
+    var getReplyPostLink = function()
+    {
+      var div = document.getElementById(isLepra ? "reply_link_default" : "js-comments_add_block_bottom");
+      return div.getElementsByTagName("a")[0];
     }
 
 
@@ -476,6 +506,31 @@ function createController()
       goGlagne: function()
       {
         document.location.href = "/";
+      },
+      
+      
+      
+      reply: function()
+      {
+        if(current && isComment(current))
+        {
+          if(commentIsHidden(current))
+          {
+            clickLink(getShowCommentLink(current));
+          }
+          else
+          {
+            var replyCommentLink = getReplyCommentLink(current);
+            if(replyCommentLink) clickLink(replyCommentLink);
+          }
+        }
+        else if(insidePost)
+        {
+          var replyPostLink = getReplyPostLink(current);
+          trace(replyPostLink);
+          if(replyPostLink) clickLink(replyPostLink);
+        }
+        
       }
 
     };
@@ -489,7 +544,7 @@ function createController()
 
 function initNavigation()
 {
-  var css = ".kb-current { border: 1px dashed #556E8C; }";
+  var css = ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }";
   css += "\n#kb-help { position: fixed; background: #ccc; padding: 1em;}";
   css += "\n#kb-help dt { float: left; width: 2em; font-weight: bold; }";
   css += "\n#kb-help dd { margin: 0.5em 0;}"
@@ -563,7 +618,14 @@ function initNavigation()
         mods = handlers[i].mods;
         if(mods.ctrl == e.ctrlKey && mods.shift == e.shiftKey && mods.alt == e.altKey)
         {
-          handlers[i].handler();
+          try
+          {
+            handlers[i].handler();
+          }
+          catch(e)
+          {
+            trace(e);
+          }
           
           e.cancelBubble = true;
           e.returnValue = false;
@@ -613,6 +675,7 @@ function initNavigation()
   addHotkey(79, controller.openPost);
   addHotkey(79, controller.openPostNewTab, { ctrl: true });
   addHotkey(71, controller.goGlagne);
+  addHotkey(82, controller.reply);
   addHotkey(72, toggleHelp);
 }
 
