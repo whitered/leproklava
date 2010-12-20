@@ -127,7 +127,9 @@ function createController()
 
     var posts = utils.getElementsByClass(postClass, postsHolder, "div");
     var head = posts[0];
-    var comments = insidePost ? utils.getElementsByClass(commentClass, commentsHolder, "div") : null;
+    var firstComment = insidePost ? 
+      document.evaluate(".//div[@class='" + commentClass + "']", commentsHolder, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue :
+      null;
 
 
     var current = null;
@@ -135,7 +137,6 @@ function createController()
 
     var isPost = function(node)
     {
-      //return node && node.nodeType == 1 && utils.hasClass(node, postClass);
       return utils.hasClass(node, postClass);
     };
 
@@ -143,9 +144,7 @@ function createController()
 
     var isComment = function(node)
     {
-      //FIXME: on lepra post has comment's class too
-      //return node && node.nodeType == 1 && utils.hasClass(node, commentClass);
-      return utils.hasClass(node, commentClass);
+      return utils.hasClass(node, commentClass) && (node.parentNode == commentsHolder);
     };
 
 
@@ -199,7 +198,7 @@ function createController()
     {
       if(insidePost && isPost(node))
       {
-        return comments[0];
+        return firstComment;
       }
       else
       {
@@ -220,7 +219,7 @@ function createController()
       {
         return null;
       }
-      else if(insidePost && node == comments[0])
+      else if(insidePost && node == firstComment)
       {
         return head;
       }
