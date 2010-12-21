@@ -7,6 +7,9 @@
 // @include        http://*.leprosorium.ru/*
 // ==/UserScript==
 
+
+var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
+
 var utils = {
 
   hasClass: function(ele,cls)
@@ -38,7 +41,6 @@ var utils = {
 
   getElementsByClass: function(searchClass,node,tag)
   {
-    if(node == null) node = document;
     if(tag == null) tag = '*';
 
     var classElements = [];
@@ -55,6 +57,15 @@ var utils = {
     }
 
     return classElements;
+  },
+  
+  
+  
+  getElementByXPath: function(expr, node)
+  {
+    var result = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    trace("getElementByXPath(" + expr + "," + node + ") = " + result);
+    return result;
   },
 
 
@@ -112,28 +123,25 @@ function createController()
 {
     var currentClass = "kb-current";
 
-    var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
     var postClass = isLepra ? "ord" : "post";
     var commentClass = isLepra ? "post" : "comment";
-    var parentLinkClass = isLepra ? "show_parent" : "c_parent";
     var headCommentClass = "indent_0";
-    var newCommentClass = "new";
 
-    var postsHolder = document.getElementById("js-posts_holder");
     var commentsHolder = document.getElementById("js-commentsHolder");
 
     var insidePost = commentsHolder != null;
 
-    var posts = utils.getElementsByClass(postClass, postsHolder, "div");
-    var head = posts[0];
-    var firstComment = insidePost ? 
-      document.evaluate(".//div[@class='" + commentClass + "']", commentsHolder, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue :
+    var head = utils.getElementByXPath(".//div[contains(@class, '" + postClass + "')]", document);
+    var firstComment = insidePost ?
+      utils.getElementByXPath("./div[contains(@class, '" + commentClass + "')]", commentsHolder) :
       null;
 
 
     var current = null;
     var history = [];
+
+
 
     var isPost = function(node)
     {
@@ -153,7 +161,7 @@ function createController()
     {
       history.push(current);
       setCurrent(node);
-    }
+    };
     
     
 
@@ -173,14 +181,6 @@ function createController()
       current = node;
       trace("current = " + (node));
       
-      function traceStack(callee)
-      {
-        trace(callee);
-        if(callee.caller) traceStack(callee.caller.arguments.callee);
-      }
-      
-      //traceStack(arguments.callee);
-
       if(current)
       {
         var links = current.getElementsByTagName("a");
@@ -219,7 +219,7 @@ function createController()
       {
         return null;
       }
-      else if(insidePost && node == firstComment)
+      else if(node == firstComment)
       {
         return head;
       }
@@ -232,16 +232,16 @@ function createController()
         while (node && !isComment(node) && !isPost(node));
         return node;
       }
-    }
+    };
 
 
 
     var getParent = function(comment)
     {
-      const links = utils.getElementsByClass(parentLinkClass, comment, "a");
-      if(links.length > 0)
+      var link = utils.getElementByXPath(isLepra ? ".//a[@class='show_parent']" : ".//a[@class='c_parent']", comment);
+      if(link)
       {
-        var comment_id = links[0].getAttribute("replyto");
+        var comment_id = link.getAttribute("replyto");
         return document.getElementById(comment_id);
       }
     };
@@ -258,19 +258,9 @@ function createController()
 
     var getItemLink = function(node)
     {
-      if(isLepra)
-      {
-        var link = document.evaluate("./div[@class='dd']/div[@class='p']/span/a", node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return link && link.href;
-      }
-      else
-      {
-        var links = utils.getElementsByClass("c_icon", current, "a");
-        if(links.length > 0)
-        {
-          return links[0].href;
-        }
-      }
+      var expr = isLepra ? "./div[@class='dd']/div[@class='p']/span/a" : ".//a[@class='c_icon']";
+      var link = utils.getElementByXPath(expr, node);
+      return link && link.href;
     };
     
     
@@ -278,22 +268,23 @@ function createController()
     var getToggleUserLink = function(node)
     {
       var expr = isLepra ? ".//a[@class='u']" : ".//a[@class='c_show_user']";
-      var link = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      return link;
+      return utils.getElementByXPath(expr, node);
     };
     
+
     
     var getVotePlusLink = function(node)
     {
       var expr = isLepra ? ".//a[contains(@class, 'plus')]" : ".//a[contains(@class, 'vote_button_plus')]";
-      return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      return utils.getElementByXPath(expr, node);
     };
+
 
 
     var getVoteMinusLink = function(node)
     {
       var expr = isLepra ? ".//a[contains(@class, 'minus')]" : ".//a[contains(@class, 'vote_button_minus')]";
-      return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      return utils.getElementByXPath(expr, node);
     };
     
     
@@ -301,7 +292,7 @@ function createController()
     var getReplyCommentLink = function(comment)
     {
       var expr = isLepra ? ".//a[@class='reply_link']" : ".//a[@class='c_answer']";
-      return document.evaluate(expr, comment, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      return utils.getElementByXPath(expr, comment);
     };
     
     
@@ -316,7 +307,7 @@ function createController()
     var getShowCommentLink = function(comment)
     {
       var expr = ".//a[@class='show_link']";
-      return document.evaluate(expr, comment, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      return utils.getElementByXPath(expr, comment);
     };
     
     
@@ -325,7 +316,8 @@ function createController()
     {
       var div = document.getElementById(isLepra ? "reply_link_default" : "js-comments_add_block_bottom");
       return div.getElementsByTagName("a")[0];
-    }
+    };
+
 
 
     var ctrl = {
@@ -365,7 +357,7 @@ function createController()
           {
             node = getNext(node);
           }
-          while(node && !utils.hasClass(node, newCommentClass));
+          while(node && !utils.hasClass(node, "new"));
           if(node) moveTo(node);
         }
         else
@@ -539,67 +531,109 @@ function createController()
 
 
 
-
-
-function initNavigation()
+function createStyle()
 {
-  var css = ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }";
-  css += "\n#kb-help { position: fixed; background: #ccc; padding: 1em;}";
-  css += "\n#kb-help dt { float: left; width: 2em; font-weight: bold; }";
-  css += "\n#kb-help dd { margin: 0.5em 0;}"
+  var css = [
+    ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }",
+    "#kb-help { position: fixed; background: #ccc; padding: 1em; z-index: 1;}",
+    "#kb-help dt { float: left; width: 2em; font-weight: bold; }",
+    "#kb-help dd { margin: 0.5em 0;}"
+  ].join("\n");
 
   var style = document.createElement("style");
   style.type = "text/css";
   style.innerHTML = css;
   document.getElementsByTagName('head')[0].appendChild(style);
+}
 
-  var toggleHelp = function()
+
+
+function toggleHelp()
+{
+  var content = document.getElementById("kb-help");
+  if(content)
   {
-    var content = document.getElementById("kb-help");
-    if(content)
-    {
-      content.parentNode.removeChild(content);
-      return;
-    }
+    content.parentNode.removeChild(content);
+    return;
+  }
 
-    var values = [
-      ["h", "Показать/скрыть окно помощи"],
-      ["n", "Следующий пост или комментарий"],
-      ["m", "Следующий пост или новый комментарий"],
-      ["v", "Родительский комментарий"],
-      [",", "Предыдущий пост или комментарий 1-го уровня"],
-      [".", "Следующий пост или комментарий 1-го уровня"],
-      ["b", "Назад"],
-      ["t", "Первый пост на странице"],
-      ["-", "Минус"],
-      ["=", "Плюс"],
-      ["u", "Выделить все комментарии автора"],
-      ["o", "Открыть пост (ctrl - в новой вкладке)"],
-      ["g", "На глагне"]
-    ];
-    content = document.createElement("div");
-    var dl = content.appendChild(document.createElement("dl"));
-    var dt;
-    var dd;
-    for (var i = 0; i < values.length; i++)
-    {
-       dt = document.createElement("dt");
-       dt.appendChild(document.createTextNode(values[i][0]));
-       dl.appendChild(dt);
+  var values = [
+    ["h", "Показать/скрыть окно помощи"],
+    ["n", "Следующий пост или комментарий"],
+    ["m", "Следующий пост или новый комментарий"],
+    ["v", "Родительский комментарий"],
+    [",", "Предыдущий пост или комментарий 1-го уровня"],
+    [".", "Следующий пост или комментарий 1-го уровня"],
+    ["b", "Назад"],
+    ["t", "Первый пост на странице"],
+    ["-", "Минус"],
+    ["=", "Плюс"],
+    ["u", "Выделить все комментарии автора"],
+    ["o", "Открыть пост (ctrl - в новой вкладке)"],
+    ["g", "На глагне"]
+  ];
+  content = document.createElement("div");
+  var dl = content.appendChild(document.createElement("dl"));
+  var dt;
+  var dd;
+  for (var i = 0; i < values.length; i++)
+  {
+     dt = document.createElement("dt");
+     dt.appendChild(document.createTextNode(values[i][0]));
+     dl.appendChild(dt);
 
-       dd = document.createElement("dd");
-       dd.appendChild(document.createTextNode(values[i][1]));
-       dl.appendChild(dd);
-    }
-    document.getElementsByTagName("body")[0].appendChild(content);
+     dd = document.createElement("dd");
+     dd.appendChild(document.createTextNode(values[i][1]));
+     dl.appendChild(dd);
+  }
+  document.getElementsByTagName("body")[0].appendChild(content);
 
-    content.id = "kb-help";
-    content.style.left = ((window.innerWidth - content.clientWidth) / 2) + "px";
-    content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
-  };
+  content.id = "kb-help";
+  content.style.left = ((window.innerWidth - content.clientWidth) / 2) + "px";
+  content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
+};
 
-  var  hotkeys = [];
+
+
+
+function initNavigation()
+{
+
+  var hotkeys = [];
     
+  var addHotkey = function(keyCode, handler, modifiers)
+  {
+    var mods = {
+      shift: modifiers && modifiers.shift == true || false,
+      ctrl: modifiers && modifiers.ctrl == true || false,
+      alt: modifiers && modifiers.alt == true || false
+    };
+    if(!hotkeys[keyCode]) hotkeys[keyCode] = [];
+    hotkeys[keyCode].push({ mods: mods, handler: handler });
+  };
+  
+  var controller = createController();
+  
+  addHotkey(78, controller.goNext);
+  addHotkey(80, controller.goPrev);
+  addHotkey(77, controller.goNextNew);
+  addHotkey(86, controller.goParent);
+  addHotkey(188, controller.goPrevHead);
+  addHotkey(190, controller.goNextHead);
+  addHotkey(66, controller.goBack);
+  addHotkey(84, controller.goTop);
+  addHotkey(45, controller.rateDown);
+  addHotkey(109, controller.rateDown);
+  addHotkey(189, controller.rateDown);
+  addHotkey(61, controller.rateUp);
+  addHotkey(187, controller.rateUp);
+  addHotkey(85, controller.toggleUser);
+  addHotkey(79, controller.openPost);
+  addHotkey(79, controller.openPostNewTab, { ctrl: true });
+  addHotkey(71, controller.goGlagne);
+  addHotkey(82, controller.reply);
+  addHotkey(72, toggleHelp);
+  
   var onKeydown = function(e)
   {
     var e = e || window.event;
@@ -644,38 +678,6 @@ function initNavigation()
   
   document.addEventListener("keydown", onKeydown, false);
  
-  var addHotkey = function(keyCode, handler, modifiers)
-  {
-    var mods = {
-      shift: modifiers && modifiers.shift == true || false,
-      ctrl: modifiers && modifiers.ctrl == true || false,
-      alt: modifiers && modifiers.alt == true || false
-    };
-    if(!hotkeys[keyCode]) hotkeys[keyCode] = [];
-    hotkeys[keyCode].push({ mods: mods, handler: handler });
-  };
-  
-  var controller = createController();
-  
-  addHotkey(78, controller.goNext);
-  addHotkey(80, controller.goPrev);
-  addHotkey(77, controller.goNextNew);
-  addHotkey(86, controller.goParent);
-  addHotkey(188, controller.goPrevHead);
-  addHotkey(190, controller.goNextHead);
-  addHotkey(66, controller.goBack);
-  addHotkey(84, controller.goTop);
-  addHotkey(45, controller.rateDown);
-  addHotkey(109, controller.rateDown);
-  addHotkey(189, controller.rateDown);
-  addHotkey(61, controller.rateUp);
-  addHotkey(187, controller.rateUp);
-  addHotkey(85, controller.toggleUser);
-  addHotkey(79, controller.openPost);
-  addHotkey(79, controller.openPostNewTab, { ctrl: true });
-  addHotkey(71, controller.goGlagne);
-  addHotkey(82, controller.reply);
-  addHotkey(72, toggleHelp);
 }
 
 
@@ -687,9 +689,19 @@ function trace(msg)
 
 
 
+//function traceStack(args)
+//{
+//  trace(args.callee);
+//  if(args.callee.caller) traceStack(callee.caller.arguments);
+//}
+
+
+      
 try
 {
+  createStyle();
   initNavigation();
+  trace("ready");
 }
 catch(e)
 {
@@ -697,5 +709,4 @@ catch(e)
 }
 
 
-trace("ready");
 
