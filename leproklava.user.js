@@ -8,6 +8,7 @@
 // ==/UserScript==
 
 
+const VERSION = "0.1";
 var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
 var utils = {
@@ -121,12 +122,10 @@ var utils = {
 
 function createController()
 {
-    var currentClass = "kb-current";
-
-
     var postClass = isLepra ? "ord" : "post";
     var commentClass = isLepra ? "post" : "comment";
     var headCommentClass = "indent_0";
+    var newCommentClass = "new";
 
     var commentsHolder = document.getElementById("js-commentsHolder");
 
@@ -167,6 +166,8 @@ function createController()
 
     var setCurrent = function(node)
     {
+      var currentClass = "kb-current";
+      
       if(current == node)
       {
         trace("same element");
@@ -357,12 +358,32 @@ function createController()
           {
             node = getNext(node);
           }
-          while(node && !utils.hasClass(node, "new"));
+          while(node && !utils.hasClass(node, newCommentClass));
           if(node) moveTo(node);
         }
         else
         {
           ctrl.goNext();
+        }
+      },
+      
+      
+      
+      goPrevNew: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getPrev(node);
+          }
+          while(node && !utils.hasClass(node, newCommentClass));
+          if(node) moveTo(node);
+        }
+        else
+        {
+          ctrl.goPrev();
         }
       },
 
@@ -581,9 +602,9 @@ function createStyle()
 {
   var css = [
     ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }",
-    "#kb-help { position: fixed; background: #ccc; padding: 1em; z-index: 1;}",
-    "#kb-help dt { float: left; width: 2em; font-weight: bold; }",
-    "#kb-help dd { margin: 0.5em 0;}"
+    "#kb-help { position: fixed; background: #eee; padding: 1em 3em; z-index: 3;}",
+    "#kb-help dt { float: left; width: 6em; font-weight: bold; }",
+    "#kb-help dd { margin: 0.5em 0; width: 40em; }"
   ].join("\n");
 
   var style = document.createElement("style");
@@ -602,50 +623,76 @@ function toggleHelp()
     content.parentNode.removeChild(content);
     return;
   }
-
-  var values = [
-    ["h", "Показать/скрыть окно помощи"],
-    ["n", "Следующий пост или комментарий"],
-    ["m", "Следующий пост или новый комментарий"],
-    ["v", "Родительский комментарий"],
-    [",", "Предыдущий пост или комментарий 1-го уровня"],
-    [".", "Следующий пост или комментарий 1-го уровня"],
-    ["b", "Назад"],
-    ["t", "Первый пост на странице"],
-    ["-", "Минус"],
-    ["=", "Плюс"],
-    ["u", "Выделить все комментарии автора"],
-    ["o", "Открыть пост (ctrl - в новой вкладке)"],
-    ["g", "На глагне"]
-  ];
-  content = document.createElement("div");
-  var dl = content.appendChild(document.createElement("dl"));
-  var dt;
-  var dd;
-  for (var i = 0; i < values.length; i++)
+  
+  var dlist = function(values)
   {
-     dt = document.createElement("dt");
-     dt.appendChild(document.createTextNode(values[i][0]));
-     dl.appendChild(dt);
+    var dl = document.createElement("dl");
+    var dt;
+    var dd;
+    for (var i = 0; i < values.length; i++)
+    {
+       dt = document.createElement("dt");
+       dt.appendChild(document.createTextNode(values[i][0]));
+       dl.appendChild(dt);
+  
+       dd = document.createElement("dd");
+       dd.appendChild(document.createTextNode(values[i][1]));
+       dl.appendChild(dd);
+    }
+    content.appendChild(dl);
+  };
+  
+  var tag = function(tag, text)
+  {
+    var el = document.createElement(tag);
+    el.appendChild(document.createTextNode(text));
+    content.appendChild(el);
+  };
 
-     dd = document.createElement("dd");
-     dd.appendChild(document.createTextNode(values[i][1]));
-     dl.appendChild(dd);
-  }
-  document.getElementsByTagName("body")[0].appendChild(content);
-
+  content = document.createElement("div");
   content.id = "kb-help";
+  
+  tag("h2", "Leproklava v" + VERSION);
+  tag("h3", "Просмотр");
+  
+  dlist([
+    ["h или ?", "показать/скрыть окно помощи"],
+    ["p/n", "переход по комментариям или постам"],
+    ["k/j", "переход по новым комментариям или постам"],
+    ["[/]", "переход по комментариям 1-го уровня или постам"],
+    ["l", "родительский комментарий"],
+    ["t", "первый пост на странице"],
+    ["b", "назад"],
+    ["v", "открыть пост (ctrl - в новой вкладке)"],
+    ["-/+", "голосовать"],
+    ["u", "выделить все комментарии автора"],
+    ["c", "комментировать"]
+  ]);
+  
+  tag("h3", "Навигация по сайту");
+  
+  dlist([
+    ["g g", "главная"],
+    ["g h", "главная подлепры"],
+    ["g p", "профиль"],
+    ["g i", "инбоксы"],
+    ["g m", "мои вещи"]
+  ]);
+  
+  document.getElementsByTagName("body")[0].appendChild(content);
+  
   content.style.left = ((window.innerWidth - content.clientWidth) / 2) + "px";
   content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
+  
+  content.addEventListener("click", toggleHelp, false);
 };
 
 
 
 function initNavigation()
 {
-
   var staticHotkeys = [];
-  var navigationHotkeys = [];
+  var jumpingHotkeys = [];
   var navigationMode = false;
   
   const CTRL = 1;
@@ -670,9 +717,9 @@ function initNavigation()
   
   
   
-  var navigationHotkey = function(handler, keyCode, modifier)
+  var jumpingHotkey = function(handler, keyCode, modifier)
   {
-    addHotkey(navigationHotkeys, handler, keyCode, modifier);
+    addHotkey(jumpingHotkeys, handler, keyCode, modifier);
   };
   
   
@@ -689,7 +736,7 @@ function initNavigation()
     if(!navigationMode)
     {
       navigationMode = true;
-      setTimeout(setStaticMode, 2000);
+      setTimeout(setStaticMode, 1000);
     }
   };
   
@@ -698,13 +745,14 @@ function initNavigation()
   var controller = createController();
   var nav = createNavigator();
   
-  staticHotkey( controller.goNext,          78 );
   staticHotkey( controller.goPrev,          80 );
-  staticHotkey( controller.goNextNew,       77 );
-  staticHotkey( controller.goParent,        86 );
-  staticHotkey( controller.goPrevHead,     188 );
-  staticHotkey( controller.goNextHead,     190 );
+  staticHotkey( controller.goNext,          78 );
+  staticHotkey( controller.goPrevNew,       75 );
+  staticHotkey( controller.goNextNew,       74 );
+  staticHotkey( controller.goPrevHead,     219 );
+  staticHotkey( controller.goNextHead,     221 );
   staticHotkey( controller.goBack,          66 );
+  staticHotkey( controller.goParent,        76 );
   staticHotkey( controller.goTop,           84 );
   staticHotkey( controller.rateDown,        45 );
   staticHotkey( controller.rateDown,       109 );
@@ -712,18 +760,19 @@ function initNavigation()
   staticHotkey( controller.rateUp,          61 );
   staticHotkey( controller.rateUp,         187 );
   staticHotkey( controller.toggleUser,      85 );
-  staticHotkey( controller.openPost,        79 );
-  staticHotkey( controller.openPostNewTab,  79 , CTRL);
+  staticHotkey( controller.openPost,        86 );
+  staticHotkey( controller.openPostNewTab,  86 , CTRL);
+  staticHotkey( controller.reply,           67 );
+  
   staticHotkey( setNavigationMode,          71 );
-  staticHotkey( controller.reply,           82 );
   staticHotkey( toggleHelp,                 72 );
   staticHotkey( toggleHelp,                 191, SHIFT);
   
-  navigationHotkey( nav.goGlagne,           71 );
-  navigationHotkey( nav.goHome,             72 );
-  navigationHotkey( nav.goInbox,            73 );
-  navigationHotkey( nav.goMyThings,         77 );
-  navigationHotkey( nav.goProfile,          80 );
+  jumpingHotkey( nav.goGlagne,           71 );
+  jumpingHotkey( nav.goHome,             72 );
+  jumpingHotkey( nav.goInbox,            73 );
+  jumpingHotkey( nav.goMyThings,         77 );
+  jumpingHotkey( nav.goProfile,          80 );
   
   var onKeydown = function(e)
   {
@@ -733,7 +782,7 @@ function initNavigation()
     if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
     
     var code = e.which || e.keyCode;
-    var handlers = navigationMode ? navigationHotkeys[code] : staticHotkeys[code];
+    var handlers = navigationMode ? jumpingHotkeys[code] : staticHotkeys[code];
     
     if(handlers)
     {
