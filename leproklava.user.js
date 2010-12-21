@@ -130,8 +130,9 @@ function createController()
     var commentsHolder = document.getElementById("js-commentsHolder");
 
     var insidePost = commentsHolder != null;
+    trace("insidePost: " + insidePost);
 
-    var head = utils.getElementByXPath(".//div[contains(@class, '" + postClass + "')]", document);
+    var head = utils.getElementsByClass(postClass, document, "div")[0];
     var firstComment = insidePost ?
       utils.getElementByXPath("./div[contains(@class, '" + commentClass + "')]", commentsHolder) :
       null;
@@ -180,7 +181,7 @@ function createController()
       }
 
       current = node;
-      trace("current = " + (node));
+      //trace("current = " + (node));
       
       if(current)
       {
@@ -259,7 +260,7 @@ function createController()
 
     var getItemLink = function(node)
     {
-      var expr = isLepra ? "./div[@class='dd']/div[@class='p']/span/a" : ".//a[@class='c_icon']";
+      var expr = isLepra ? "./div[@class='dd']/div[@class='p']/span/a" : "./div[@class='dd']/span/a";
       var link = utils.getElementByXPath(expr, node);
       return link && link.href;
     };
@@ -553,9 +554,10 @@ function createNavigator()
   };
   
   
-  
-  var profileUrl = utils.getElementByXPath("//div[@class='header_tagline_inner']/a", document).href;
-  var glagne = isLepra ? "leprosorium.ru" : window.location.host;
+  var expr = isLepra ? "id('greetings')/a" : "//div[@class='header_tagline_inner']/a";
+  var profileLink = utils.getElementByXPath(expr, document);
+  var profileUrl = profileLink && profileLink.href;
+  var glagne = "http://" + (isLepra ? "leprosorium.ru" : window.location.host);
   
   
   
@@ -577,14 +579,14 @@ function createNavigator()
     
     goInbox: function()
     {
-      go("/my/inbox");
+      go(glagne + "/my/inbox");
     },
     
     
     
     goMyThings: function()
     {
-      go("/my");
+      go(glagne + "/my");
     },
     
     
@@ -615,6 +617,29 @@ function createStyle()
 
 
 
+function closeOnEsc(e)
+{
+  e = e || window.event;
+  
+  var element = e.target;
+  if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
+  
+  var code = e.which || e.keyCode;
+  if(code == 27)
+  {
+    toggleHelp();
+    document.removeEventListener("keypress", closeOnEsc, false);
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+  
+  
+  
+  
 function toggleHelp()
 {
   var content = document.getElementById("kb-help");
@@ -685,6 +710,7 @@ function toggleHelp()
   content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
   
   content.addEventListener("click", toggleHelp, false);
+  document.addEventListener("keypress", closeOnEsc, false);
 };
 
 
@@ -779,7 +805,8 @@ function initNavigation()
     e = e || window.event;
     
     var element = e.target;
-    if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
+    
+    if((element.tagName == 'INPUT' && (element.type == 'text' || element.type == 'password')) || element.tagName == 'TEXTAREA') return true;
     
     var code = e.which || e.keyCode;
     var handlers = navigationMode ? jumpingHotkeys[code] : staticHotkeys[code];
