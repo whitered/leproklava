@@ -64,7 +64,7 @@ var utils = {
   getElementByXPath: function(expr, node)
   {
     var result = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    trace("getElementByXPath(" + expr + "," + node + ") = " + result);
+    //trace("getElementByXPath(" + expr + "," + node + ") = " + result);
     return result;
   },
 
@@ -477,7 +477,7 @@ function createController()
         if(current)
         {
           var url = getItemLink(current);
-          if(url) document.location.href = url;
+          if(url) window.location.href = url;
         }
       },
       
@@ -490,13 +490,6 @@ function createController()
           var url = getItemLink(current);
           if(url) GM_openInTab(url);
         }
-      },
-      
-      
-      
-      goGlagne: function()
-      {
-        document.location.href = "/";
       },
       
       
@@ -527,6 +520,59 @@ function createController()
     };
 
     return ctrl;
+}
+
+
+
+function createNavigator()
+{
+  var go = function(url)
+  {
+    window.location.href = url;
+  };
+  
+  
+  
+  var profileUrl = utils.getElementByXPath("//div[@class='header_tagline_inner']/a", document).href;
+  var glagne = isLepra ? "leprosorium.ru" : window.location.host;
+  
+  
+  
+  return {
+    
+    goGlagne: function()
+    {
+      go(glagne);
+    },
+    
+    
+    
+    goHome: function()
+    {    
+      go("/");
+    },
+    
+    
+    
+    goInbox: function()
+    {
+      go("/my/inbox");
+    },
+    
+    
+    
+    goMyThings: function()
+    {
+      go("/my");
+    },
+    
+    
+    
+    goProfile: function()
+    {
+      go(profileUrl);
+    }
+  };
 }
 
 
@@ -595,89 +641,130 @@ function toggleHelp()
 
 
 
-
 function initNavigation()
 {
 
-  var hotkeys = [];
+  var staticHotkeys = [];
+  var navigationHotkeys = [];
+  var navigationMode = false;
+  
+  const CTRL = 1;
+  const SHIFT = 2;
+  const ALT = 4;
+  
+  
     
-  var addHotkey = function(keyCode, handler, modifiers)
+  var addHotkey = function(hotkeys, handler, keyCode, modifier)
   {
-    var mods = {
-      shift: modifiers && modifiers.shift == true || false,
-      ctrl: modifiers && modifiers.ctrl == true || false,
-      alt: modifiers && modifiers.alt == true || false
-    };
-    if(!hotkeys[keyCode]) hotkeys[keyCode] = [];
-    hotkeys[keyCode].push({ mods: mods, handler: handler });
+    modifier = modifier || 0;
+    if(hotkeys[keyCode] == null) hotkeys[keyCode] = [];
+    hotkeys[keyCode][modifier] = handler;
   };
   
-  var controller = createController();
   
-  addHotkey(78, controller.goNext);
-  addHotkey(80, controller.goPrev);
-  addHotkey(77, controller.goNextNew);
-  addHotkey(86, controller.goParent);
-  addHotkey(188, controller.goPrevHead);
-  addHotkey(190, controller.goNextHead);
-  addHotkey(66, controller.goBack);
-  addHotkey(84, controller.goTop);
-  addHotkey(45, controller.rateDown);
-  addHotkey(109, controller.rateDown);
-  addHotkey(189, controller.rateDown);
-  addHotkey(61, controller.rateUp);
-  addHotkey(187, controller.rateUp);
-  addHotkey(85, controller.toggleUser);
-  addHotkey(79, controller.openPost);
-  addHotkey(79, controller.openPostNewTab, { ctrl: true });
-  addHotkey(71, controller.goGlagne);
-  addHotkey(82, controller.reply);
-  addHotkey(72, toggleHelp);
+  
+  var staticHotkey = function(handler, keyCode, modifier)
+  {
+    addHotkey(staticHotkeys, handler, keyCode, modifier);
+  };
+  
+  
+  
+  var navigationHotkey = function(handler, keyCode, modifier)
+  {
+    addHotkey(navigationHotkeys, handler, keyCode, modifier);
+  };
+  
+  
+  
+  var setStaticMode = function()
+  {
+    navigationMode = false;
+  };
+  
+  
+  
+  var setNavigationMode = function()
+  {
+    if(!navigationMode)
+    {
+      navigationMode = true;
+      setTimeout(setStaticMode, 2000);
+    }
+  };
+  
+  
+  
+  var controller = createController();
+  var nav = createNavigator();
+  
+  staticHotkey( controller.goNext,          78 );
+  staticHotkey( controller.goPrev,          80 );
+  staticHotkey( controller.goNextNew,       77 );
+  staticHotkey( controller.goParent,        86 );
+  staticHotkey( controller.goPrevHead,     188 );
+  staticHotkey( controller.goNextHead,     190 );
+  staticHotkey( controller.goBack,          66 );
+  staticHotkey( controller.goTop,           84 );
+  staticHotkey( controller.rateDown,        45 );
+  staticHotkey( controller.rateDown,       109 );
+  staticHotkey( controller.rateDown,       189 );
+  staticHotkey( controller.rateUp,          61 );
+  staticHotkey( controller.rateUp,         187 );
+  staticHotkey( controller.toggleUser,      85 );
+  staticHotkey( controller.openPost,        79 );
+  staticHotkey( controller.openPostNewTab,  79 , CTRL);
+  staticHotkey( setNavigationMode,          71 );
+  staticHotkey( controller.reply,           82 );
+  staticHotkey( toggleHelp,                 72 );
+  staticHotkey( toggleHelp,                 191, SHIFT);
+  
+  navigationHotkey( nav.goGlagne,           71 );
+  navigationHotkey( nav.goHome,             72 );
+  navigationHotkey( nav.goInbox,            73 );
+  navigationHotkey( nav.goMyThings,         77 );
+  navigationHotkey( nav.goProfile,          80 );
   
   var onKeydown = function(e)
   {
-    var e = e || window.event;
+    e = e || window.event;
     
     var element = e.target;
     if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
     
     var code = e.which || e.keyCode;
-    var handlers = hotkeys[code];
-    var mods;
+    var handlers = navigationMode ? navigationHotkeys[code] : staticHotkeys[code];
+    
     if(handlers)
     {
-      for(var i = handlers.length - 1; i >= 0; i--)
+      var modifier = (e.ctrlKey ? CTRL : 0) + (e.shiftKey ? SHIFT : 0) + (e.altKey ? ALT : 0);
+      var handler = handlers[modifier];
+      if(handler)
       {
-        mods = handlers[i].mods;
-        if(mods.ctrl == e.ctrlKey && mods.shift == e.shiftKey && mods.alt == e.altKey)
+        try
         {
-          try
-          {
-            handlers[i].handler();
-          }
-          catch(e)
-          {
-            trace(e);
-          }
-          
-          e.cancelBubble = true;
-          e.returnValue = false;
-      
-          if (e.stopPropagation)
-          {
-            e.stopPropagation();
-            e.preventDefault();
-          }
-          return false;
-          
+          handler();
         }
+        catch(e)
+        {
+          trace(e);
+        }
+        
+        e.cancelBubble = true;
+        e.returnValue = false;
+    
+        if (e.stopPropagation)
+        {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+        return false;
       }
     }
     return true;
   };
   
   document.addEventListener("keydown", onKeydown, false);
- 
 }
 
 
