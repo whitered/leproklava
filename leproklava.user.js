@@ -628,7 +628,6 @@ function closeOnEsc(e)
   if(code == 27)
   {
     toggleHelp();
-    document.removeEventListener("keypress", closeOnEsc, false);
     return false;
   }
   else
@@ -646,6 +645,7 @@ function toggleHelp()
   if(content)
   {
     content.parentNode.removeChild(content);
+    document.removeEventListener("keydown", closeOnEsc, false);
     return;
   }
   
@@ -710,7 +710,7 @@ function toggleHelp()
   content.style.top = ((window.innerHeight - content.clientHeight) / 2) + "px";
   
   content.addEventListener("click", toggleHelp, false);
-  document.addEventListener("keypress", closeOnEsc, false);
+  document.addEventListener("keydown", closeOnEsc, false);
 };
 
 
