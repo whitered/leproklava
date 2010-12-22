@@ -137,6 +137,12 @@ function createController()
       utils.getElementByXPath("./div[contains(@class, '" + commentClass + "')]", commentsHolder) :
       null;
 
+    var fakeLink = document.createElement("a");
+    fakeLink.setAttribute("href", "#");
+    fakeLink.addEventListener("blur", function(e) { fake.parentNode.removeChild(fake); }, false);
+    
+    
+    
 
     var current = head;
     var history = [];
@@ -180,11 +186,8 @@ function createController()
      */
     var prefocusElement = function(node)
     {
-      var fake = document.createElement("a");
-      fake.setAttribute("href", "#");
-      node.insertBefore(fake, node.firstChild);
-      fake.focus();
-      fake.addEventListener("blur", function(e) { node.removeChild(fake); }, false);
+      node.insertBefore(fakeLink, node.firstChild);
+      fakeLink.focus();
     };
     
     
@@ -898,7 +901,10 @@ function initNavigation()
       {
         try
         {
+          var t1 = new Date();
           handler();
+          var time = new Date() - t1;
+          if(time > 2) trace("time: " + time);
         }
         catch(e)
         {
