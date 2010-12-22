@@ -138,8 +138,9 @@ function createController()
       null;
 
 
-    var current = null;
+    var current = head;
     var history = [];
+    
 
 
 
@@ -154,6 +155,14 @@ function createController()
     {
       return utils.hasClass(node, commentClass) && (node.parentNode == commentsHolder);
     };
+    
+    
+    
+    if(window.location.hash.length > 1)
+    {
+      var target = document.getElementById(window.location.hash.substring(1));
+      if(isComment(target)) current = target;
+    }
 
 
 
@@ -161,6 +170,21 @@ function createController()
     {
       history.push(current);
       setCurrent(node);
+    };
+    
+    
+    
+    /**
+     * this method ensures that the first active element in the node will be selected when user press TAB
+     * http://stackoverflow.com/questions/4490831/prepare-to-focus-first-active-element-in-a-container
+     */
+    var prefocusElement = function(node)
+    {
+      var fake = document.createElement("a");
+      fake.setAttribute("href", "#");
+      node.insertBefore(fake, node.firstChild);
+      fake.focus();
+      fake.addEventListener("blur", function(e) { node.removeChild(fake); }, false);
     };
     
     
@@ -172,7 +196,7 @@ function createController()
       if(current == node)
       {
         trace("same element");
-        return;
+        //return;
       }     
       
       if(current)
@@ -185,8 +209,7 @@ function createController()
       
       if(current)
       {
-        var links = current.getElementsByTagName("a");
-        links[0].focus();
+        prefocusElement(current);
         utils.addClass(current, currentClass);
         var offset = (window.innerHeight - current.offsetHeight) / 2;
         if(offset < 0) offset = 0;
@@ -612,7 +635,7 @@ function createStyle()
   var style = document.createElement("style");
   style.type = "text/css";
   style.innerHTML = css;
-  document.getElementsByTagName('head')[0].appendChild(style);
+  document.getElementsByTagName("head")[0].appendChild(style);
 }
 
 
@@ -622,7 +645,7 @@ function closeOnEsc(e)
   e = e || window.event;
   
   var element = e.target;
-  if(element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') return true;
+  if(element.tagName == "INPUT" || element.tagName == "TEXTAREA") return true;
   
   var code = e.which || e.keyCode;
   if(code == 27)
@@ -862,9 +885,11 @@ function trace(msg)
       
 try
 {
+  var t0 = new Date();
   createStyle();
   initNavigation();
-  trace("ready");
+  var t1 = new Date();
+  trace("ready in " + (t1 - t0) + " ms");
 }
 catch(e)
 {
