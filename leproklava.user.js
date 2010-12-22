@@ -608,7 +608,11 @@ function createController()
         else if(insidePost)
         {
           var replyPostLink = getReplyPostLink(current);
-          if(replyPostLink) clickLink(replyPostLink);
+          if(replyPostLink)
+          {
+            clickLink(replyPostLink);
+            if(isLepra) document.getElementById("comment_textarea").focus();
+          }
         }
         
       }
@@ -771,7 +775,7 @@ function toggleHelp()
     ["v", "открыть пост (ctrl - в новой вкладке)"],
     ["-/+", "голосовать"],
     ["u", "выделить все комментарии автора"],
-    ["c", "комментировать"]
+    ["c", "раскрыть комментарий, комментировать"]
   ]);
   
   tag("h4", "навигация по сайту");
