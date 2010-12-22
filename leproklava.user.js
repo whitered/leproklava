@@ -677,7 +677,8 @@ function createStyle()
   var css = [
     ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }",
     "#kb-help { position: fixed; background: #eee; padding: 1em 3em; z-index: 3;}",
-    "#kb-help dt { float: left; width: 6em; font-weight: bold; }",
+    "#kb-help h4 {margin-top: 2em; }",
+    "#kb-help dt { float: left; width: 8em; font-weight: bold; }",
     "#kb-help dd { margin: 0.5em 0; width: 40em; }"
   ].join("\n");
 
@@ -728,6 +729,7 @@ function toggleHelp()
     var dd;
     for (var i = 0; i < values.length; i++)
     {
+       if(!values[i]) continue;
        dt = document.createElement("dt");
        dt.appendChild(document.createTextNode(values[i][0]));
        dl.appendChild(dt);
@@ -748,15 +750,19 @@ function toggleHelp()
 
   content = document.createElement("div");
   content.id = "kb-help";
+  content.className = "small";
   
-  tag("h2", "Leproklava v" + VERSION);
-  tag("h3", "Просмотр");
+  tag("h2", "leproklava");
   
+  tag("p", "версия " + VERSION);
+  
+  tag("h4", "навигация по странице");
   dlist([
     ["h или ?", "показать/скрыть окно помощи"],
-    ["p/n", "переход по комментариям или постам"],
-    ["k/j", "переход по новым комментариям или постам"],
-    ["[/]", "переход по комментариям 1-го уровня или постам"],
+    ["p / n", "переход по комментариям или постам"],
+    ["k / j", "переход по новым комментариям или постам"],
+    ["[ / ]", "переход по комментариям 1-го уровня или постам"],
+    ["ctrl + [ / ]", "переход по комментариям с картинкой"],
     ["l", "родительский комментарий"],
     ["t", "первый пост на странице"],
     ["b", "назад"],
@@ -766,11 +772,10 @@ function toggleHelp()
     ["c", "комментировать"]
   ]);
   
-  tag("h3", "Навигация по сайту");
-  
+  tag("h4", "навигация по сайту");
   dlist([
     ["g g", "главная"],
-    ["g h", "главная подлепры"],
+    isLepra ? ["g h", "главная подлепры"] : null,
     ["g p", "профиль"],
     ["g i", "инбоксы"],
     ["g m", "мои вещи"]
