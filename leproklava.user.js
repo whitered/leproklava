@@ -16,8 +16,7 @@ var utils = {
   hasClass: function(ele,cls)
   {
     if(!ele) return false;
-    var pattern = new RegExp("(\\s|^)" + cls + "(\\s|$)");
-    return pattern.test(ele.className);
+    return ele.className ? ele.className.split(" ").indexOf(cls) >= 0 : false;
   },
 
 
@@ -139,7 +138,13 @@ function createController()
 
     var fakeLink = document.createElement("a");
     fakeLink.setAttribute("href", "#");
-    fakeLink.addEventListener("blur", function(e) { fakeLink.parentNode.removeChild(fake); }, false);
+    
+    var removeFakeLink = function(e)
+    {
+      fakeLink.parentNode.removeChild(fakeLink);
+    };
+    
+    fakeLink.addEventListener("blur", removeFakeLink, false);
     
     
     
