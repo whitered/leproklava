@@ -342,6 +342,15 @@ function createController()
       var div = document.getElementById(isLepra ? "reply_link_default" : "js-comments_add_block_bottom");
       return div.getElementsByTagName("a")[0];
     };
+    
+    
+    
+    var hasPicture = function(node)
+    {
+      var expr = isLepra ? "./div[contains(@class, 'dt')]//img" : ".//div[contains(@class, 'c_body')]//img";
+      var img = utils.getElementByXPath(expr, node);
+      return !!img;
+    };
 
 
 
@@ -461,9 +470,49 @@ function createController()
           ctrl.goPrev();
         }
       },
+      
+      
+      
+      goNextPicture: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getNext(node);
+          }
+          while(node && !hasPicture(node));
+          if(node) moveTo(node);
+        }
+        else
+        {
+          ctrl.goNext();
+        }
+      },
 
 
 
+      goPrevPicture: function()
+      {
+        if(insidePost)
+        {
+          var node = current || head;
+          do
+          {
+            node = getPrev(node);
+          }
+          while(node && !hasPicture(node));
+          if(node) moveTo(node);
+        }
+        else
+        {
+          ctrl.goPrev();
+        }
+      },
+      
+      
+      
       goBack: function()
       {
         if(history.length > 0)
@@ -800,6 +849,8 @@ function initNavigation()
   staticHotkey( controller.goNextNew,       74 );
   staticHotkey( controller.goPrevHead,     219 );
   staticHotkey( controller.goNextHead,     221 );
+  staticHotkey( controller.goPrevPicture,  219, CTRL);
+  staticHotkey( controller.goNextPicture,  221, CTRL);
   staticHotkey( controller.goBack,          66 );
   staticHotkey( controller.goParent,        76 );
   staticHotkey( controller.goTop,           84 );
