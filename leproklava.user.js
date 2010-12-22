@@ -139,12 +139,12 @@ function createController()
 
     var fakeLink = document.createElement("a");
     fakeLink.setAttribute("href", "#");
-    fakeLink.addEventListener("blur", function(e) { fake.parentNode.removeChild(fake); }, false);
+    fakeLink.addEventListener("blur", function(e) { fakeLink.parentNode.removeChild(fake); }, false);
     
     
     
 
-    var current = head;
+    var current = insidePost ? head : null;
     var history = [];
     
 
@@ -343,7 +343,7 @@ function createController()
     var getReplyPostLink = function()
     {
       var div = document.getElementById(isLepra ? "reply_link_default" : "js-comments_add_block_bottom");
-      return div.getElementsByTagName("a")[0];
+      return div && div.getElementsByTagName("a")[0];
     };
     
     
@@ -608,7 +608,6 @@ function createController()
         else if(insidePost)
         {
           var replyPostLink = getReplyPostLink(current);
-          trace(replyPostLink);
           if(replyPostLink) clickLink(replyPostLink);
         }
         
@@ -848,6 +847,22 @@ function initNavigation()
   
   
   
+  var hideCommentForm = function()
+  {
+    if(isLepra)
+    {
+      document.getElementById("reply_form").style.display = "none";
+      document.getElementById("reply_link_default").style.display = "block";
+    }
+    else
+    {
+      utils.addClass(document.getElementById("js-comments_reply_block"), "hidden");
+      utils.removeClass(utils.getElementByXPath("./a[contains(@class, 'comments_add_block_bottom_link')]", document.getElementById('js-comments_add_block_bottom')), 'hidden');
+    }
+  };
+    
+  
+  
   var controller = createController();
   var nav = createNavigator();
   
@@ -887,10 +902,17 @@ function initNavigation()
     e = e || window.event;
     
     var element = e.target;
-    
-    if((element.tagName == 'INPUT' && (element.type == 'text' || element.type == 'password')) || element.tagName == 'TEXTAREA') return true;
-    
     var code = e.which || e.keyCode;
+    
+    if((element.tagName == "INPUT" && (element.type == "text" || element.type == "password")) || element.tagName == "TEXTAREA")
+    {
+      if(code == 27 && element.id == "comment_textarea")
+      {
+        hideCommentForm();
+      }
+      return true;
+    } 
+    
     var handlers = navigationMode ? jumpingHotkeys[code] : staticHotkeys[code];
     
     if(handlers)
