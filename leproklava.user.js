@@ -191,6 +191,10 @@ function createController()
      */
     var prefocusElement = function(node)
     {
+      if(document.activeElement == fakeLink)
+      {
+        fakeLink.blur();
+      }
       node.insertBefore(fakeLink, node.firstChild);
       fakeLink.focus();
     };
