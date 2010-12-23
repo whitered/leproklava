@@ -297,7 +297,7 @@ function createController()
     {
       var expr = isLepra ? "./div[@class='dd']/div[@class='p']/span/a" : "./div[@class='dd']/span/a";
       var link = utils.getElementByXPath(expr, node);
-      return link && link.href;
+      return link;
     };
     
     
@@ -305,6 +305,16 @@ function createController()
     var getToggleUserLink = function(node)
     {
       var expr = isLepra ? ".//a[@class='u']" : ".//a[@class='c_show_user']";
+      return utils.getElementByXPath(expr, node);
+    };
+    
+    
+    
+    var getAuthorLink = function(node)
+    {
+      var expr = isLepra ? 
+        "./div[@class='dd']/div[@class='p']//a[@usernum]" : 
+        (isPost(node) ? "./div[@class='dd']/a[contains(@href, '/user/')]" : ".//a[@class='c_user']");
       return utils.getElementByXPath(expr, node);
     };
     
@@ -575,6 +585,17 @@ function createController()
           }
         }
       },
+      
+      
+      
+      visitUser: function()
+      {
+        if(current)
+        {
+          var link = getAuthorLink(current);
+          if(link) GM_openInTab(link.href);
+        }
+      },
 
 
 
@@ -582,8 +603,8 @@ function createController()
       {
         if(current)
         {
-          var url = getItemLink(current);
-          if(url) window.location.href = url;
+          var link = getItemLink(current);
+          if(link) window.location.href = link.href;
         }
       },
       
@@ -593,8 +614,8 @@ function createController()
       {
         if(current)
         {
-          var url = getItemLink(current);
-          if(url) GM_openInTab(url);
+          var link = getItemLink(current);
+          if(link) GM_openInTab(link.href);
         }
       },
       
@@ -777,13 +798,14 @@ function toggleHelp()
     ["p / n", "переход по комментариям или постам"],
     ["k / j", "переход по новым комментариям или постам"],
     ["[ / ]", "переход по комментариям 1-го уровня или постам"],
-    ["ctrl + [ / ]", "переход по комментариям с картинкой"],
+    ["shift + [ / ]", "переход по комментариям с картинкой"],
     ["l", "родительский комментарий"],
     ["t", "первый пост на странице"],
     ["b", "назад"],
     ["v", "открыть пост (ctrl - в новой вкладке)"],
-    ["-/+", "голосовать"],
+    ["- / +", "голосовать"],
     ["u", "выделить все комментарии автора"],
+    ["ctrl + u", "открыть профиль автора"],
     ["c", "раскрыть комментарий, комментировать"]
   ]);
   
@@ -885,8 +907,8 @@ function initNavigation()
   staticHotkey( controller.goNextNew,       74 );
   staticHotkey( controller.goPrevHead,     219 );
   staticHotkey( controller.goNextHead,     221 );
-  staticHotkey( controller.goPrevPicture,  219, CTRL);
-  staticHotkey( controller.goNextPicture,  221, CTRL);
+  staticHotkey( controller.goPrevPicture,  219 , SHIFT);
+  staticHotkey( controller.goNextPicture,  221 , SHIFT);
   staticHotkey( controller.goBack,          66 );
   staticHotkey( controller.goParent,        76 );
   staticHotkey( controller.goTop,           84 );
@@ -896,6 +918,7 @@ function initNavigation()
   staticHotkey( controller.rateUp,          61 );
   staticHotkey( controller.rateUp,         187 );
   staticHotkey( controller.toggleUser,      85 );
+  staticHotkey( controller.visitUser,       85 , CTRL);
   staticHotkey( controller.openPost,        86 );
   staticHotkey( controller.openPostNewTab,  86 , CTRL);
   staticHotkey( controller.reply,           67 );
