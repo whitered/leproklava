@@ -894,6 +894,7 @@ function initNavigation()
       utils.addClass(document.getElementById("js-comments_reply_block"), "hidden");
       utils.removeClass(utils.getElementByXPath("./a[contains(@class, 'comments_add_block_bottom_link')]", document.getElementById('js-comments_add_block_bottom')), 'hidden');
     }
+    if(document.activeElement) document.activeElement.blur();
   };
     
   
