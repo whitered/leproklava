@@ -7,13 +7,14 @@
 // @include        http://*.leprosorium.ru/*
 // ==/UserScript==
 
+(function(){
 
 const VERSION = "0.1";
 var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
 var utils = {
 
-  hasClass: function(ele,cls)
+  hasClass: function(ele, cls)
   {
     if(!ele) return false;
     return ele.className ? ele.className.split(" ").indexOf(cls) >= 0 : false;
@@ -21,32 +22,32 @@ var utils = {
 
 
 
-  addClass: function(ele,cls)
+  addClass: function(ele, cls)
   {
-    if (!this.hasClass(ele,cls)) ele.className += " " + cls;
+    if (!this.hasClass(ele, cls)) ele.className += " " + cls;
   },
 
 
 
-  removeClass: function(ele,cls)
+  removeClass: function(ele, cls)
   {
-    if (this.hasClass(ele,cls))
+    if (this.hasClass(ele, cls))
     {
-      var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
-      ele.className=ele.className.replace(reg,' ');
+      var reg = new RegExp("(\\s|^)" + cls + "(\\s|$)");
+      ele.className = ele.className.replace(reg, " ");
     }
   },
 
 
 
-  getElementsByClass: function(searchClass,node,tag)
+  getElementsByClass: function(searchClass, node, tag)
   {
-    if(tag == null) tag = '*';
+    if(tag == null) tag = "*";
 
     var classElements = [];
     var els = node.getElementsByTagName(tag);
     var elsLen = els.length;
-    var pattern = new RegExp("(^|\\s)"+searchClass+"(\\s|$)");
+    var pattern = new RegExp("(^|\\s)" + searchClass + "(\\s|$)");
 
     for(var i = 0; i < elsLen; i++)
     {
@@ -70,16 +71,16 @@ var utils = {
 
 
 
-  scrollPosition: function(y,x)
+  scrollPosition: function(y, x)
   {
-    var x = x || null;
-    var y = y || null;
+    x = x || null;
+    y = y || null;
 
     if(x === null && y === null)
     {
       y = document.body.scrollTop ? document.body.scrollTop : document.documentElement.scrollTop;
       x = document.body.scrollTop ? document.body.scrollLeft : document.documentElement.scrollLeft;
-      return {x:x, y:y}
+      return { x: x, y: y }
     }
     else
     {
@@ -91,7 +92,7 @@ var utils = {
       {
         x = document.body.scrollTop ? document.body.scrollLeft : document.documentElement.scrollLeft;
       }
-      window.scrollTo(x,y);
+      window.scrollTo(x, y);
     }
   },
 
@@ -112,7 +113,7 @@ var utils = {
         y += el.offsetTop;
       }
     }
-    return {x:x, y:y};
+    return { x: x, y: y };
   }
 
 };
@@ -121,7 +122,7 @@ var utils = {
 
 function createController()
 {
-    var cssClass = {
+  var cssClass = {
     post:           isLepra ? "ord" : "post",
     comment:        isLepra ? "post" : "comment",
     headComment:    "indent_0",
@@ -159,8 +160,6 @@ function createController()
   };
   
   
-  
-  
   var commentsHolder = document.getElementById("js-commentsHolder");
 
   var insidePost = commentsHolder != null;
@@ -173,8 +172,6 @@ function createController()
 
   var current = insidePost ? head : null;
   var history = [];
-
-
 
   var fakeLink = document.createElement("a");
   fakeLink.setAttribute("href", "#");
@@ -774,8 +771,6 @@ function initNavigation()
   const CTRL = 1;
   const SHIFT = 2;
   const ALT = 4;
-  
-  
     
   var addHotkey = function(hotkeys, handler, keyCode, modifier)
   {
@@ -954,4 +949,5 @@ catch(e)
 }
 
 
+})();
 
