@@ -127,7 +127,7 @@ function createController()
     comment:        isLepra ? "post" : "comment",
     headComment:    "indent_0",
     newComment:     "new",
-    hiddenComment:  "shrink"
+    hiddenComment:  "shrinked"
   };
   
   var xpath = isLepra ? 
@@ -194,7 +194,7 @@ function createController()
 
   var isComment = function(node)
   {
-    return utils.hasClass(node, commentClass) && (node.parentNode == commentsHolder);
+    return utils.hasClass(node, cssClass.comment) && (node.parentNode == commentsHolder);
   };
   
   
