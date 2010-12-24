@@ -121,20 +121,60 @@ var utils = {
 
 function createController()
 {
-    var postClass = isLepra ? "ord" : "post";
-    var commentClass = isLepra ? "post" : "comment";
-    var headCommentClass = "indent_0";
-    var newCommentClass = "new";
-
+    var cssClass = {
+      post:           isLepra ? "ord" : "post",
+      comment:        isLepra ? "post" : "comment",
+      headComment:    "indent_0",
+      newComment:     "new",
+      hiddenComment:  "shrink"
+    };
+    
+    var xpath = isLepra ? 
+    {
+      parentLink:           ".//a[@class='show_parent']",
+      itemLink:             "./div[@class='dd']/div[@class='p']/span/a",
+      toggleUserLink:       ".//a[@class='u']",
+      postAuthorLink:       "./div[@class='dd']/div[@class='p']//a[@usernum]",
+      commentAuthorLink:    "./div[@class='dd']/div[@class='p']//a[@usernum]",
+      votePlusLink:         ".//a[contains(@class, 'plus')]",
+      voteMinusLink:        ".//a[contains(@class, 'minus')]",
+      replyCommentLink:     ".//a[@class='reply_link']",
+      showCommentLink:      ".//a[@class='show_link']",
+      replyPostLink:        "id('reply_link_default')/a",
+      commentPicture:       "./div[contains(@class, 'dt')]//img"
+    } 
+    : 
+    {
+      parentLink:           ".//a[@class='c_parent']",
+      itemLink:             "./div[@class='dd']/span/a",
+      toggleUserLink:       ".//a[@class='c_show_user']",
+      postAuthorLink:       "./div[@class='dd']/a[contains(@href, '/user/')]", 
+      commentAuthorLink:    ".//a[@class='c_user']",
+      votePlusLink:         ".//a[contains(@class, 'vote_button_plus')]",
+      voteMinusLink:        ".//a[contains(@class, 'vote_button_minus')]",
+      replyCommentLink:     ".//a[@class='c_answer']",
+      showCommentLink:      ".//a[@class='show_link']",
+      replyPostLink:        "id('js-comments_add_block_bottom')/a",
+      commentPicture:       ".//div[contains(@class, 'c_body')]//img"
+    };
+    
+    
+    
+    
     var commentsHolder = document.getElementById("js-commentsHolder");
 
     var insidePost = commentsHolder != null;
     trace("insidePost: " + insidePost);
 
-    var head = utils.getElementsByClass(postClass, document, "div")[0];
+    var head = utils.getElementsByClass(cssClass.post, document, "div")[0];
     var firstComment = insidePost ?
-      utils.getElementByXPath("./div[contains(@class, '" + commentClass + "')]", commentsHolder) :
+      utils.getElementByXPath("./div[contains(@class, '" + cssClass.comment + "')]", commentsHolder) :
       null;
+
+    var current = insidePost ? head : null;
+    var history = [];
+
+
 
     var fakeLink = document.createElement("a");
     fakeLink.setAttribute("href", "#");
@@ -146,18 +186,11 @@ function createController()
     
     fakeLink.addEventListener("blur", removeFakeLink, false);
     
-    
-    
-
-    var current = insidePost ? head : null;
-    var history = [];
-    
-
 
 
     var isPost = function(node)
     {
-      return utils.hasClass(node, postClass);
+      return utils.hasClass(node, cssClass.post);
     };
 
 
@@ -169,14 +202,15 @@ function createController()
     
     
     
+    // init navigation with page's target element with no visual effect
     if(window.location.hash.length > 1)
     {
       var target = document.getElementById(window.location.hash.substring(1));
       if(isComment(target)) current = target;
     }
 
-
-
+    
+    
     var moveTo = function(node)
     {
       history.push(current);
@@ -185,22 +219,6 @@ function createController()
     
     
     
-    /**
-     * this method ensures that the first active element in the node will be selected when user press TAB
-     * http://stackoverflow.com/questions/4490831/prepare-to-focus-first-active-element-in-a-container
-     */
-    var prefocusElement = function(node)
-    {
-      if(document.activeElement == fakeLink)
-      {
-        fakeLink.blur();
-      }
-      node.insertBefore(fakeLink, node.firstChild);
-      fakeLink.focus();
-    };
-    
-    
-
     var setCurrent = function(node)
     {
       var currentClass = "kb-current";
@@ -208,7 +226,6 @@ function createController()
       if(current == node)
       {
         trace("same element");
-        //return;
       }     
       
       if(current)
@@ -221,7 +238,15 @@ function createController()
       
       if(current)
       {
-        prefocusElement(current);
+         // ensure that the first active element in the node will be selected when user press TAB
+         // http://stackoverflow.com/questions/4490831/prepare-to-focus-first-active-element-in-a-container
+        if(document.activeElement == fakeLink)
+        {
+          fakeLink.blur();
+        }
+        current.insertBefore(fakeLink, current.firstChild);
+        fakeLink.focus();
+
         utils.addClass(current, currentClass);
         var offset = (window.innerHeight - current.offsetHeight) / 2;
         if(offset < 0) offset = 0;
@@ -273,105 +298,11 @@ function createController()
 
 
 
-    var getParent = function(comment)
-    {
-      var link = utils.getElementByXPath(isLepra ? ".//a[@class='show_parent']" : ".//a[@class='c_parent']", comment);
-      if(link)
-      {
-        var comment_id = link.getAttribute("replyto");
-        return document.getElementById(comment_id);
-      }
-    };
-
-
-
     var clickLink = function(link)
     {
       var theEvent = document.createEvent("MouseEvent");
       theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
       link.dispatchEvent(theEvent);
-    };
-
-
-    var getItemLink = function(node)
-    {
-      var expr = isLepra ? "./div[@class='dd']/div[@class='p']/span/a" : "./div[@class='dd']/span/a";
-      var link = utils.getElementByXPath(expr, node);
-      return link;
-    };
-    
-    
-    
-    var getToggleUserLink = function(node)
-    {
-      var expr = isLepra ? ".//a[@class='u']" : ".//a[@class='c_show_user']";
-      return utils.getElementByXPath(expr, node);
-    };
-    
-    
-    
-    var getAuthorLink = function(node)
-    {
-      var expr = isLepra ? 
-        "./div[@class='dd']/div[@class='p']//a[@usernum]" : 
-        (isPost(node) ? "./div[@class='dd']/a[contains(@href, '/user/')]" : ".//a[@class='c_user']");
-      return utils.getElementByXPath(expr, node);
-    };
-    
-
-    
-    var getVotePlusLink = function(node)
-    {
-      var expr = isLepra ? ".//a[contains(@class, 'plus')]" : ".//a[contains(@class, 'vote_button_plus')]";
-      return utils.getElementByXPath(expr, node);
-    };
-
-
-
-    var getVoteMinusLink = function(node)
-    {
-      var expr = isLepra ? ".//a[contains(@class, 'minus')]" : ".//a[contains(@class, 'vote_button_minus')]";
-      return utils.getElementByXPath(expr, node);
-    };
-    
-    
-    
-    var getReplyCommentLink = function(comment)
-    {
-      var expr = isLepra ? ".//a[@class='reply_link']" : ".//a[@class='c_answer']";
-      return utils.getElementByXPath(expr, comment);
-    };
-    
-    
-    
-    var commentIsHidden = function(node)
-    {
-      return utils.hasClass(node, "shrinked");
-    };
-    
-    
-    
-    var getShowCommentLink = function(comment)
-    {
-      var expr = ".//a[@class='show_link']";
-      return utils.getElementByXPath(expr, comment);
-    };
-    
-    
-    
-    var getReplyPostLink = function()
-    {
-      var div = document.getElementById(isLepra ? "reply_link_default" : "js-comments_add_block_bottom");
-      return div && div.getElementsByTagName("a")[0];
-    };
-    
-    
-    
-    var hasPicture = function(node)
-    {
-      var expr = isLepra ? "./div[contains(@class, 'dt')]//img" : ".//div[contains(@class, 'c_body')]//img";
-      var img = utils.getElementByXPath(expr, node);
-      return !!img;
     };
 
 
@@ -413,7 +344,7 @@ function createController()
           {
             node = getNext(node);
           }
-          while(node && !utils.hasClass(node, newCommentClass));
+          while(node && !utils.hasClass(node, cssClass.newComment));
           if(node) moveTo(node);
         }
         else
@@ -433,7 +364,7 @@ function createController()
           {
             node = getPrev(node);
           }
-          while(node && !utils.hasClass(node, newCommentClass));
+          while(node && !utils.hasClass(node, cssClass.newComment));
           if(node) moveTo(node);
         }
         else
@@ -446,10 +377,15 @@ function createController()
 
       goParent: function()
       {
+
         if(isComment(current))
         {
-          var parent = getParent(current);
-          if(parent) moveTo(parent);
+          var link = utils.getElementByXPath(xpath.parentLink, current);
+          if(link)
+          {
+            var comment_id = link.getAttribute("replyto");
+            moveTo(document.getElementById(comment_id));
+          }
         }
       },
 
@@ -464,7 +400,7 @@ function createController()
           {
             node = getNext(node);
           }
-          while(node && !utils.hasClass(node, headCommentClass));
+          while(node && !utils.hasClass(node, cssClass.headComment));
           if(node) moveTo(node);
         }
         else
@@ -484,7 +420,7 @@ function createController()
           {
             node = getPrev(node);
           }
-          while(node && !utils.hasClass(node, headCommentClass));
+          while(node && !utils.hasClass(node, cssClass.headComment));
           if(node) moveTo(node);
         }
         else
@@ -504,7 +440,7 @@ function createController()
           {
             node = getNext(node);
           }
-          while(node && !hasPicture(node));
+          while(node && !utils.getElementByXPath(xpath.commentPicture, node));
           if(node) moveTo(node);
         }
         else
@@ -524,7 +460,7 @@ function createController()
           {
             node = getPrev(node);
           }
-          while(node && !hasPicture(node));
+          while(node && !utils.getElementByXPath(xpath.commentPicture, node));
           if(node) moveTo(node);
         }
         else
@@ -556,7 +492,7 @@ function createController()
       {
         if(current)
         {
-          var link = getVotePlusLink(current);
+          var link = utils.getElementByXPath(xpath.votePlusLink, current);
           if(link) clickLink(link);
         }
       },
@@ -567,7 +503,7 @@ function createController()
       {
         if(current)
         {
-          var link = getVoteMinusLink(current);
+          var link = utils.getElementByXPath(xpath.voteMinusLink, node);
           if(link) clickLink(link);
         }
       },
@@ -578,7 +514,7 @@ function createController()
       {
         if(current)
         {
-          var link = getToggleUserLink(current);
+          var link = utils.getElementByXPath(xpath.toggleUserLink, current);
           if(link)
           {
             clickLink(link);
@@ -592,7 +528,7 @@ function createController()
       {
         if(current)
         {
-          var link = getAuthorLink(current);
+          var link = utils.getElementByXPath(isPost(current) ? xpath.postAuthorLink : xpath.commentAuthorLink, current);
           if(link) GM_openInTab(link.href);
         }
       },
@@ -603,7 +539,7 @@ function createController()
       {
         if(current)
         {
-          var link = getItemLink(current);
+          var link = utils.getElementByXPath(xpath.itemLink, current);
           if(link) window.location.href = link.href;
         }
       },
@@ -614,7 +550,7 @@ function createController()
       {
         if(current)
         {
-          var link = getItemLink(current);
+          var link = utils.getElementByXPath(xpath.itemLink, current);
           if(link) GM_openInTab(link.href);
         }
       },
@@ -625,19 +561,19 @@ function createController()
       {
         if(current && isComment(current))
         {
-          if(commentIsHidden(current))
+          if(utils.hasClass(current, cssClass.hiddenComment))
           {
-            clickLink(getShowCommentLink(current));
+            clickLink(utils.getElementByXPath(xpath.showCommentLink, current));
           }
           else
           {
-            var replyCommentLink = getReplyCommentLink(current);
+            var replyCommentLink = utils.getElementByXPath(xpath.replyCommentLink, current);
             if(replyCommentLink) clickLink(replyCommentLink);
           }
         }
         else if(insidePost)
         {
-          var replyPostLink = getReplyPostLink(current);
+          var replyPostLink = utils.getElementByXPath(xpath.replyPostLink, current);
           if(replyPostLink)
           {
             clickLink(replyPostLink);
