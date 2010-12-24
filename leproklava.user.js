@@ -122,470 +122,470 @@ var utils = {
 function createController()
 {
     var cssClass = {
-      post:           isLepra ? "ord" : "post",
-      comment:        isLepra ? "post" : "comment",
-      headComment:    "indent_0",
-      newComment:     "new",
-      hiddenComment:  "shrink"
-    };
+    post:           isLepra ? "ord" : "post",
+    comment:        isLepra ? "post" : "comment",
+    headComment:    "indent_0",
+    newComment:     "new",
+    hiddenComment:  "shrink"
+  };
+  
+  var xpath = isLepra ? 
+  {
+    parentLink:           ".//a[@class='show_parent']",
+    itemLink:             "./div[@class='dd']/div[@class='p']/span/a",
+    toggleUserLink:       ".//a[@class='u']",
+    postAuthorLink:       "./div[@class='dd']/div[@class='p']//a[@usernum]",
+    commentAuthorLink:    "./div[@class='dd']/div[@class='p']//a[@usernum]",
+    votePlusLink:         ".//a[contains(@class, 'plus')]",
+    voteMinusLink:        ".//a[contains(@class, 'minus')]",
+    replyCommentLink:     ".//a[@class='reply_link']",
+    showCommentLink:      ".//a[@class='show_link']",
+    replyPostLink:        "id('reply_link_default')/a",
+    commentPicture:       "./div[contains(@class, 'dt')]//img"
+  } 
+  : 
+  {
+    parentLink:           ".//a[@class='c_parent']",
+    itemLink:             "./div[@class='dd']/span/a",
+    toggleUserLink:       ".//a[@class='c_show_user']",
+    postAuthorLink:       "./div[@class='dd']/a[contains(@href, '/user/')]", 
+    commentAuthorLink:    ".//a[@class='c_user']",
+    votePlusLink:         ".//a[contains(@class, 'vote_button_plus')]",
+    voteMinusLink:        ".//a[contains(@class, 'vote_button_minus')]",
+    replyCommentLink:     ".//a[@class='c_answer']",
+    showCommentLink:      ".//a[@class='show_link']",
+    replyPostLink:        "id('js-comments_add_block_bottom')/a",
+    commentPicture:       ".//div[contains(@class, 'c_body')]//img"
+  };
+  
+  
+  
+  
+  var commentsHolder = document.getElementById("js-commentsHolder");
+
+  var insidePost = commentsHolder != null;
+  trace("insidePost: " + insidePost);
+
+  var head = utils.getElementsByClass(cssClass.post, document, "div")[0];
+  var firstComment = insidePost ?
+    utils.getElementByXPath("./div[contains(@class, '" + cssClass.comment + "')]", commentsHolder) :
+    null;
+
+  var current = insidePost ? head : null;
+  var history = [];
+
+
+
+  var fakeLink = document.createElement("a");
+  fakeLink.setAttribute("href", "#");
+  
+  var removeFakeLink = function(e)
+  {
+    fakeLink.parentNode.removeChild(fakeLink);
+  };
+  
+  fakeLink.addEventListener("blur", removeFakeLink, false);
+  
+
+
+  var isPost = function(node)
+  {
+    return utils.hasClass(node, cssClass.post);
+  };
+
+
+
+  var isComment = function(node)
+  {
+    return utils.hasClass(node, commentClass) && (node.parentNode == commentsHolder);
+  };
+  
+  
+  
+  // init navigation with page's target element with no visual effect
+  if(window.location.hash.length > 1)
+  {
+    var target = document.getElementById(window.location.hash.substring(1));
+    if(isComment(target)) current = target;
+  }
+
+  
+  
+  var moveTo = function(node)
+  {
+    history.push(current);
+    setCurrent(node);
+  };
+  
+  
+  
+  var setCurrent = function(node)
+  {
+    var currentClass = "kb-current";
     
-    var xpath = isLepra ? 
+    if(current == node)
     {
-      parentLink:           ".//a[@class='show_parent']",
-      itemLink:             "./div[@class='dd']/div[@class='p']/span/a",
-      toggleUserLink:       ".//a[@class='u']",
-      postAuthorLink:       "./div[@class='dd']/div[@class='p']//a[@usernum]",
-      commentAuthorLink:    "./div[@class='dd']/div[@class='p']//a[@usernum]",
-      votePlusLink:         ".//a[contains(@class, 'plus')]",
-      voteMinusLink:        ".//a[contains(@class, 'minus')]",
-      replyCommentLink:     ".//a[@class='reply_link']",
-      showCommentLink:      ".//a[@class='show_link']",
-      replyPostLink:        "id('reply_link_default')/a",
-      commentPicture:       "./div[contains(@class, 'dt')]//img"
-    } 
-    : 
+      trace("same element");
+    }     
+    
+    if(current)
     {
-      parentLink:           ".//a[@class='c_parent']",
-      itemLink:             "./div[@class='dd']/span/a",
-      toggleUserLink:       ".//a[@class='c_show_user']",
-      postAuthorLink:       "./div[@class='dd']/a[contains(@href, '/user/')]", 
-      commentAuthorLink:    ".//a[@class='c_user']",
-      votePlusLink:         ".//a[contains(@class, 'vote_button_plus')]",
-      voteMinusLink:        ".//a[contains(@class, 'vote_button_minus')]",
-      replyCommentLink:     ".//a[@class='c_answer']",
-      showCommentLink:      ".//a[@class='show_link']",
-      replyPostLink:        "id('js-comments_add_block_bottom')/a",
-      commentPicture:       ".//div[contains(@class, 'c_body')]//img"
-    };
-    
-    
-    
-    
-    var commentsHolder = document.getElementById("js-commentsHolder");
-
-    var insidePost = commentsHolder != null;
-    trace("insidePost: " + insidePost);
-
-    var head = utils.getElementsByClass(cssClass.post, document, "div")[0];
-    var firstComment = insidePost ?
-      utils.getElementByXPath("./div[contains(@class, '" + cssClass.comment + "')]", commentsHolder) :
-      null;
-
-    var current = insidePost ? head : null;
-    var history = [];
-
-
-
-    var fakeLink = document.createElement("a");
-    fakeLink.setAttribute("href", "#");
-    
-    var removeFakeLink = function(e)
-    {
-      fakeLink.parentNode.removeChild(fakeLink);
-    };
-    
-    fakeLink.addEventListener("blur", removeFakeLink, false);
-    
-
-
-    var isPost = function(node)
-    {
-      return utils.hasClass(node, cssClass.post);
-    };
-
-
-
-    var isComment = function(node)
-    {
-      return utils.hasClass(node, commentClass) && (node.parentNode == commentsHolder);
-    };
-    
-    
-    
-    // init navigation with page's target element with no visual effect
-    if(window.location.hash.length > 1)
-    {
-      var target = document.getElementById(window.location.hash.substring(1));
-      if(isComment(target)) current = target;
+      utils.removeClass(current, currentClass);
     }
 
+    current = node;
+    //trace("current = " + (node));
     
-    
-    var moveTo = function(node)
+    if(current)
     {
-      history.push(current);
-      setCurrent(node);
-    };
-    
-    
-    
-    var setCurrent = function(node)
-    {
-      var currentClass = "kb-current";
-      
-      if(current == node)
+       // ensure that the first active element in the node will be selected when user press TAB
+       // http://stackoverflow.com/questions/4490831/prepare-to-focus-first-active-element-in-a-container
+      if(document.activeElement == fakeLink)
       {
-        trace("same element");
-      }     
-      
+        fakeLink.blur();
+      }
+      current.insertBefore(fakeLink, current.firstChild);
+      fakeLink.focus();
+
+      utils.addClass(current, currentClass);
+      var offset = (window.innerHeight - current.offsetHeight) / 2;
+      if(offset < 0) offset = 0;
+      utils.scrollPosition(utils.elementPosition(current).y - offset);
+    }
+  };
+
+
+
+  var getNext = function(node)
+  {
+    if(insidePost && isPost(node))
+    {
+      return firstComment;
+    }
+    else
+    {
+      do
+      {
+        node = node.nextSibling;
+      }
+      while (node && !isComment(node) && !isPost(node));
+      return node;
+    }
+  };
+
+
+
+  var getPrev = function(node)
+  {
+    if(insidePost && isPost(node))
+    {
+      return null;
+    }
+    else if(node == firstComment)
+    {
+      return head;
+    }
+    else
+    {
+      do
+      {
+        node = node.previousSibling;
+      }
+      while (node && !isComment(node) && !isPost(node));
+      return node;
+    }
+  };
+
+
+
+  var clickLink = function(link)
+  {
+    var theEvent = document.createEvent("MouseEvent");
+    theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    link.dispatchEvent(theEvent);
+  };
+
+
+
+  var ctrl = {
+
+    goNext: function()
+    {
       if(current)
       {
-        utils.removeClass(current, currentClass);
-      }
-
-      current = node;
-      //trace("current = " + (node));
-      
-      if(current)
-      {
-         // ensure that the first active element in the node will be selected when user press TAB
-         // http://stackoverflow.com/questions/4490831/prepare-to-focus-first-active-element-in-a-container
-        if(document.activeElement == fakeLink)
-        {
-          fakeLink.blur();
-        }
-        current.insertBefore(fakeLink, current.firstChild);
-        fakeLink.focus();
-
-        utils.addClass(current, currentClass);
-        var offset = (window.innerHeight - current.offsetHeight) / 2;
-        if(offset < 0) offset = 0;
-        utils.scrollPosition(utils.elementPosition(current).y - offset);
-      }
-    };
-
-
-
-    var getNext = function(node)
-    {
-      if(insidePost && isPost(node))
-      {
-        return firstComment;
+        var next = getNext(current);
+        if(next) moveTo(next);
       }
       else
-      {
-        do
-        {
-          node = node.nextSibling;
-        }
-        while (node && !isComment(node) && !isPost(node));
-        return node;
-      }
-    };
-
-
-
-    var getPrev = function(node)
-    {
-      if(insidePost && isPost(node))
-      {
-        return null;
-      }
-      else if(node == firstComment)
-      {
-        return head;
-      }
-      else
-      {
-        do
-        {
-          node = node.previousSibling;
-        }
-        while (node && !isComment(node) && !isPost(node));
-        return node;
-      }
-    };
-
-
-
-    var clickLink = function(link)
-    {
-      var theEvent = document.createEvent("MouseEvent");
-      theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-      link.dispatchEvent(theEvent);
-    };
-
-
-
-    var ctrl = {
-
-      goNext: function()
-      {
-        if(current)
-        {
-          var next = getNext(current);
-          if(next) moveTo(next);
-        }
-        else
-        {
-          moveTo(head);
-        }
-      },
-      
-      
-      
-      goPrev: function()
-      {
-        if(current)
-        {
-          var prev = getPrev(current);
-          if(prev) moveTo(prev);
-        }
-      },
-
-
-
-      goNextNew: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getNext(node);
-          }
-          while(node && !utils.hasClass(node, cssClass.newComment));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goNext();
-        }
-      },
-      
-      
-      
-      goPrevNew: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getPrev(node);
-          }
-          while(node && !utils.hasClass(node, cssClass.newComment));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goPrev();
-        }
-      },
-
-
-
-      goParent: function()
-      {
-
-        if(isComment(current))
-        {
-          var link = utils.getElementByXPath(xpath.parentLink, current);
-          if(link)
-          {
-            var comment_id = link.getAttribute("replyto");
-            moveTo(document.getElementById(comment_id));
-          }
-        }
-      },
-
-
-
-      goNextHead: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getNext(node);
-          }
-          while(node && !utils.hasClass(node, cssClass.headComment));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goNext();
-        }
-      },
-
-
-
-      goPrevHead: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getPrev(node);
-          }
-          while(node && !utils.hasClass(node, cssClass.headComment));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goPrev();
-        }
-      },
-      
-      
-      
-      goNextPicture: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getNext(node);
-          }
-          while(node && !utils.getElementByXPath(xpath.commentPicture, node));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goNext();
-        }
-      },
-
-
-
-      goPrevPicture: function()
-      {
-        if(insidePost)
-        {
-          var node = current || head;
-          do
-          {
-            node = getPrev(node);
-          }
-          while(node && !utils.getElementByXPath(xpath.commentPicture, node));
-          if(node) moveTo(node);
-        }
-        else
-        {
-          ctrl.goPrev();
-        }
-      },
-      
-      
-      
-      goBack: function()
-      {
-        if(history.length > 0)
-        {
-          setCurrent(history.pop());
-        }
-      },
-
-
-
-      goTop: function()
       {
         moveTo(head);
-      },
-
-
-
-      rateUp: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(xpath.votePlusLink, current);
-          if(link) clickLink(link);
-        }
-      },
-
-
-
-      rateDown: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(xpath.voteMinusLink, node);
-          if(link) clickLink(link);
-        }
-      },
-
-
-
-      toggleUser: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(xpath.toggleUserLink, current);
-          if(link)
-          {
-            clickLink(link);
-          }
-        }
-      },
-      
-      
-      
-      visitUser: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(isPost(current) ? xpath.postAuthorLink : xpath.commentAuthorLink, current);
-          if(link) GM_openInTab(link.href);
-        }
-      },
-
-
-
-      openPost: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(xpath.itemLink, current);
-          if(link) window.location.href = link.href;
-        }
-      },
-      
-      
-      
-      openPostNewTab: function()
-      {
-        if(current)
-        {
-          var link = utils.getElementByXPath(xpath.itemLink, current);
-          if(link) GM_openInTab(link.href);
-        }
-      },
-      
-      
-      
-      reply: function()
-      {
-        if(current && isComment(current))
-        {
-          if(utils.hasClass(current, cssClass.hiddenComment))
-          {
-            clickLink(utils.getElementByXPath(xpath.showCommentLink, current));
-          }
-          else
-          {
-            var replyCommentLink = utils.getElementByXPath(xpath.replyCommentLink, current);
-            if(replyCommentLink) clickLink(replyCommentLink);
-          }
-        }
-        else if(insidePost)
-        {
-          var replyPostLink = utils.getElementByXPath(xpath.replyPostLink, current);
-          if(replyPostLink)
-          {
-            clickLink(replyPostLink);
-            if(isLepra) document.getElementById("comment_textarea").focus();
-          }
-        }
-        
       }
+    },
+    
+    
+    
+    goPrev: function()
+    {
+      if(current)
+      {
+        var prev = getPrev(current);
+        if(prev) moveTo(prev);
+      }
+    },
 
-    };
 
-    return ctrl;
+
+    goNextNew: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getNext(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.newComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goNext();
+      }
+    },
+    
+    
+    
+    goPrevNew: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getPrev(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.newComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goPrev();
+      }
+    },
+
+
+
+    goParent: function()
+    {
+
+      if(isComment(current))
+      {
+        var link = utils.getElementByXPath(xpath.parentLink, current);
+        if(link)
+        {
+          var comment_id = link.getAttribute("replyto");
+          moveTo(document.getElementById(comment_id));
+        }
+      }
+    },
+
+
+
+    goNextHead: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getNext(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.headComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goNext();
+      }
+    },
+
+
+
+    goPrevHead: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getPrev(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.headComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goPrev();
+      }
+    },
+    
+    
+    
+    goNextPicture: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getNext(node);
+        }
+        while(node && !utils.getElementByXPath(xpath.commentPicture, node));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goNext();
+      }
+    },
+
+
+
+    goPrevPicture: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getPrev(node);
+        }
+        while(node && !utils.getElementByXPath(xpath.commentPicture, node));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goPrev();
+      }
+    },
+    
+    
+    
+    goBack: function()
+    {
+      if(history.length > 0)
+      {
+        setCurrent(history.pop());
+      }
+    },
+
+
+
+    goTop: function()
+    {
+      moveTo(head);
+    },
+
+
+
+    rateUp: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(xpath.votePlusLink, current);
+        if(link) clickLink(link);
+      }
+    },
+
+
+
+    rateDown: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(xpath.voteMinusLink, node);
+        if(link) clickLink(link);
+      }
+    },
+
+
+
+    toggleUser: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(xpath.toggleUserLink, current);
+        if(link)
+        {
+          clickLink(link);
+        }
+      }
+    },
+    
+    
+    
+    visitUser: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(isPost(current) ? xpath.postAuthorLink : xpath.commentAuthorLink, current);
+        if(link) GM_openInTab(link.href);
+      }
+    },
+
+
+
+    openPost: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(xpath.itemLink, current);
+        if(link) window.location.href = link.href;
+      }
+    },
+    
+    
+    
+    openPostNewTab: function()
+    {
+      if(current)
+      {
+        var link = utils.getElementByXPath(xpath.itemLink, current);
+        if(link) GM_openInTab(link.href);
+      }
+    },
+    
+    
+    
+    reply: function()
+    {
+      if(current && isComment(current))
+      {
+        if(utils.hasClass(current, cssClass.hiddenComment))
+        {
+          clickLink(utils.getElementByXPath(xpath.showCommentLink, current));
+        }
+        else
+        {
+          var replyCommentLink = utils.getElementByXPath(xpath.replyCommentLink, current);
+          if(replyCommentLink) clickLink(replyCommentLink);
+        }
+      }
+      else if(insidePost)
+      {
+        var replyPostLink = utils.getElementByXPath(xpath.replyPostLink, current);
+        if(replyPostLink)
+        {
+          clickLink(replyPostLink);
+          if(isLepra) document.getElementById("comment_textarea").focus();
+        }
+      }
+      
+    }
+
+  };
+
+  return ctrl;
 }
 
 
