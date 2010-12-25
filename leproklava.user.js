@@ -729,6 +729,7 @@ function toggleHelp()
   dlist([
     ["h или ?", "показать/скрыть окно помощи"],
     ["p / n", "переход по комментариям или постам"],
+    ["shift + p / n", "переход по новым комментариям или постам"],
     ["k / j", "переход по новым комментариям или постам"],
     ["[ / ]", "переход по комментариям 1-го уровня или постам"],
     ["shift + [ / ]", "переход по комментариям с картинкой"],
@@ -835,6 +836,8 @@ function initNavigation()
   
   staticHotkey( controller.goPrev,          80 );
   staticHotkey( controller.goNext,          78 );
+  staticHotkey( controller.goPrevNew,       80 , SHIFT);
+  staticHotkey( controller.goNextNew,       78 , SHIFT);
   staticHotkey( controller.goPrevNew,       75 );
   staticHotkey( controller.goNextNew,       74 );
   staticHotkey( controller.goPrevHead,     219 );
