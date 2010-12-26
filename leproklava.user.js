@@ -9,7 +9,7 @@
 
 (function(){
 
-const VERSION = "0.1";
+const VERSION = "0.2";
 var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
 var utils = {
@@ -64,9 +64,7 @@ var utils = {
   
   getElementByXPath: function(expr, node)
   {
-    var result = document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    //trace("getElementByXPath(" + expr + "," + node + ") = " + result);
-    return result;
+    return document.evaluate(expr, node, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
   },
 
 
@@ -164,7 +162,6 @@ function createController()
 
   
   var insidePost = commentsHolder != null;
-  trace("insidePost: " + insidePost);
 
   var head = utils.getElementsByClass(cssClass.post, document, "div")[0];
   var firstComment = insidePost ?
@@ -183,11 +180,9 @@ function createController()
   var handleClick = function(e)
   {
     var elem = e.target;
-    trace(elem);
     while(elem && !isComment(elem) && !isPost(elem) && elem != e.currentTarget)
     {
       elem = elem.parentNode;
-      trace(elem);
     }
     if(elem && elem != current) setCurrent(elem, true);
   }
@@ -264,18 +259,12 @@ function createController()
   {
     var currentClass = "kb-current";
     
-    if(current == node)
-    {
-      trace("same element");
-    }     
-    
     if(current)
     {
       utils.removeClass(current, currentClass);
     }
 
     current = node;
-    //trace("current = " + (node));
     
     if(current)
     {
@@ -939,17 +928,7 @@ function initNavigation()
       var handler = handlers[modifier];
       if(handler)
       {
-        try
-        {
-          var t1 = new Date();
-          handler();
-          var time = new Date() - t1;
-          if(time > 2) trace("time: " + time);
-        }
-        catch(e)
-        {
-          trace(e);
-        }
+        handler();
         
         e.cancelBubble = true;
         e.returnValue = false;
@@ -970,55 +949,8 @@ function initNavigation()
 
 
 
-var logDiv;
-function trace(msg)
-{
-  if(!logDiv)
-  {
-    logDiv = document.createElement("div");
-    logDiv.style.position = "absolute";
-    logDiv.style.width = "auto";
-    logDiv.style.zIndex = "3";
-    logDiv.style.right = "0em";
-    logDiv.style.top = "0em";
-    logDiv.style.backgroundColor = "#fcc";
-    logDiv.style.fontSize = "12px";
-    logDiv.style.padding = "1em";
-    
-    var body = document.getElementsByTagName("body")[0];
-    body.appendChild(logDiv);
-  }
-  
-  var p = document.createElement("p");
-  p.style.margin = "0em";
-  
-  p.appendChild(document.createTextNode(msg));
-  logDiv.appendChild(p);
-}
-
-
-
-//function traceStack(args)
-//{
-//  trace(args.callee);
-//  if(args.callee.caller) traceStack(callee.caller.arguments);
-//}
-
-
-      
-try
-{
-  var t0 = new Date();
-  createStyle();
-  initNavigation();
-  var t1 = new Date();
-  trace("ready in " + (t1 - t0) + " ms");
-}
-catch(e)
-{
-  trace(e);
-}
-
+createStyle();
+initNavigation();
 
 })();
 
