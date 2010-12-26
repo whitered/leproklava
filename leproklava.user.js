@@ -162,6 +162,7 @@ function createController()
   
   var commentsHolder = document.getElementById("js-commentsHolder");
 
+  
   var insidePost = commentsHolder != null;
   trace("insidePost: " + insidePost);
 
@@ -172,9 +173,52 @@ function createController()
 
   var current = insidePost ? head : null;
   var history = [];
+  
+  
+  
+  //----------------------------------------------------------------------------
+  // focus element by mouse
+  //----------------------------------------------------------------------------
+  
+  var handleClick = function(e)
+  {
+    var elem = e.target;
+    trace(elem);
+    while(elem && !isComment(elem) && !isPost(elem) && elem != e.currentTarget)
+    {
+      elem = elem.parentNode;
+      trace(elem);
+    }
+    if(elem && elem != current) setCurrent(elem, true);
+  }
 
+  var listenForClick = function(target)
+  {
+    if(target)
+    {
+      target.addEventListener("click", handleClick, false);
+    }
+  }
+  
+  if(insidePost)
+  {
+    listenForClick(commentsHolder);
+    listenForClick(head);
+  }
+  else
+  {
+    listenForClick(document.getElementById("js-posts_holder"));
+  }
+  
+  
+  
+  //----------------------------------------------------------------------------
+  // fake link used to start selecting active elements inside the current item
+  //----------------------------------------------------------------------------
   var fakeLink = document.createElement("a");
   fakeLink.setAttribute("href", "#");
+  fakeLink.style.position = "absolute";
+  fakeLink.style.left = "-1000px";
   
   var removeFakeLink = function(e)
   {
@@ -203,7 +247,7 @@ function createController()
   if(window.location.hash.length > 1)
   {
     var target = document.getElementById(window.location.hash.substring(1));
-    if(isComment(target)) current = target;
+    if(isComment(target)) setCurrent(target, true);
   }
 
   
@@ -211,12 +255,12 @@ function createController()
   var moveTo = function(node)
   {
     history.push(current);
-    setCurrent(node);
+    setCurrent(node, false);
   };
   
   
   
-  var setCurrent = function(node)
+  var setCurrent = function(node, silent)
   {
     var currentClass = "kb-current";
     
@@ -243,11 +287,14 @@ function createController()
       }
       current.insertBefore(fakeLink, current.firstChild);
       fakeLink.focus();
-
-      utils.addClass(current, currentClass);
-      var offset = (window.innerHeight - current.offsetHeight) / 2;
-      if(offset < 0) offset = 0;
-      utils.scrollPosition(utils.elementPosition(current).y - offset);
+      
+      if(!silent)
+      {
+        utils.addClass(current, currentClass);
+        var offset = (window.innerHeight - current.offsetHeight) / 2;
+        if(offset < 0) offset = 0;
+        utils.scrollPosition(utils.elementPosition(current).y - offset);
+      }
     }
   };
 
@@ -472,7 +519,7 @@ function createController()
     {
       if(history.length > 0)
       {
-        setCurrent(history.pop());
+        setCurrent(history.pop(), false);
       }
     },
 
@@ -500,7 +547,7 @@ function createController()
     {
       if(current)
       {
-        var link = utils.getElementByXPath(xpath.voteMinusLink, node);
+        var link = utils.getElementByXPath(xpath.voteMinusLink, current);
         if(link) clickLink(link);
       }
     },
@@ -747,7 +794,7 @@ function toggleHelp()
   dlist([
     ["g g", "главная"],
     isLepra ? ["g h", "главная подлепры"] : null,
-    ["g p", "профиль"],
+    ["g p", "мой профиль"],
     ["g i", "инбоксы"],
     ["g m", "мои вещи"]
   ]);
