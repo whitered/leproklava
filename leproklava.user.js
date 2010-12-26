@@ -135,8 +135,8 @@ function createController()
     parentLink:           ".//a[@class='show_parent']",
     itemLink:             "./div[@class='dd']/div[@class='p']/span/a",
     toggleUserLink:       ".//a[@class='u']",
-    postAuthorLink:       "./div[@class='dd']/div[@class='p']//a[@usernum]",
-    commentAuthorLink:    "./div[@class='dd']/div[@class='p']//a[@usernum]",
+    postAuthorLink:       "./div[@class='dd']/div[@class='p']//a[contains(@href, '/users/')]",
+    commentAuthorLink:    "./div[@class='dd']/div[@class='p']//a[contains(@href, '/users/')]",
     votePlusLink:         ".//a[contains(@class, 'plus')]",
     voteMinusLink:        ".//a[contains(@class, 'minus')]",
     replyCommentLink:     ".//a[@class='reply_link']",
@@ -526,7 +526,7 @@ function createController()
       if(current)
       {
         var link = utils.getElementByXPath(isPost(current) ? xpath.postAuthorLink : xpath.commentAuthorLink, current);
-        if(link) GM_openInTab(link.href);
+        if(link) window.open(link.href);
       }
     },
 
@@ -548,7 +548,7 @@ function createController()
       if(current)
       {
         var link = utils.getElementByXPath(xpath.itemLink, current);
-        if(link) GM_openInTab(link.href);
+        if(link) window.open(link.href);
       }
     },
     
