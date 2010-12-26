@@ -923,9 +923,30 @@ function initNavigation()
 
 
 
+var log;
 function trace(msg)
 {
-  GM_log(msg);
+  if(!log)
+  {
+    log = document.createElement("div");
+    log.style.position = "absolute";
+    log.style.width = "auto";
+    log.style.zIndex = "3";
+    log.style.right = "0em";
+    log.style.top = "0em";
+    log.style.backgroundColor = "#fcc";
+    log.style.fontSize = "12px";
+    log.style.padding = "1em";
+    
+    var body = document.getElementsByTagName("body")[0];
+    body.insertBefore(log, body.firstChild);
+  }
+  
+  var p = document.createElement("p");
+  p.style.margin = "0em";
+  
+  p.appendChild(document.createTextNode(msg));
+  log.appendChild(p);
 }
 
 
