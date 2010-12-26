@@ -207,7 +207,7 @@ function createController()
   }
   else
   {
-    listenForClick(document.getElementById("js-posts_holder"));
+    listenForClick(document.getElementById("js-posts_holder") || document.getElementById("inbox_posts"));
   }
   
   
