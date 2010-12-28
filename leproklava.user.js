@@ -9,7 +9,7 @@
 
 (function(){
 
-const VERSION = "0.1";
+const VERSION = "0.3";
 var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
 var utils = {
@@ -642,11 +642,57 @@ function createNavigator()
   };
   
   
+  
+  var openArchive = function(date)
+  {
+    var year = date.getFullYear().toString();
+    var month = (date.getMonth() + 1).toString();
+    var day = date.getDate().toString();
+    if(month.length == 1) month = "0" + month;
+    if(day.length == 1) day = "0" + day;
+    
+    go(glagne + "/archive/" + year + month + day);
+  };
+  
+  
+  
+  var turnPage = function(step)
+  {
+    var path = window.location.pathname;
+    var pagestr;
+    if(path == "/")
+    {
+      pagestr = "1";
+    }
+    else
+    {
+      var md = path.match(/\/archive\/(\d{8})/) || path.match(/\/page\/(\d+)/);
+      if(!md) return;
+      pagestr = md[1];
+    } 
+    
+    if(pagestr.length == 8)
+    {
+      var year = Number(pagestr.substr(0, 4));
+      var month = Number(pagestr.substr(4, 2)) - 1;
+      var day = Number(pagestr.substr(6, 2));
+      var date = new Date(year, month, day);
+      date.setDate(date.getDate() + step);
+      openArchive(date);
+    }
+    else
+    {
+      var page = Number(pagestr) + step;
+      go((page > 1) ? "/page/" + page : "/");
+    }
+  };
+  
+  
+  
   var expr = isLepra ? "id('greetings')/a" : "//div[@class='header_tagline_inner']/a";
   var profileLink = utils.getElementByXPath(expr, document);
   var profileUrl = profileLink && profileLink.href;
   var glagne = "http://" + (isLepra ? "leprosorium.ru" : window.location.host);
-  
   
   
   return {
@@ -682,6 +728,27 @@ function createNavigator()
     goProfile: function()
     {
       go(profileUrl);
+    },
+    
+    
+    
+    goArchive: function()
+    {
+      openArchive(new Date());
+    },
+    
+    
+    
+    goPrevPage: function()
+    {
+      turnPage(-1);
+    },
+    
+    
+    
+    goNextPage: function()
+    {
+      turnPage(1);
     }
   };
 }
@@ -796,7 +863,10 @@ function toggleHelp()
     isLepra ? ["g h", "главная подлепры"] : null,
     ["g p", "мой профиль"],
     ["g i", "инбоксы"],
-    ["g m", "мои вещи"]
+    ["g m", "мои вещи"],
+    ["g a", "архив"],
+    ["g [", "предыдущая страница или день в архиве"],
+    ["g ]", "следующая страница или день в архиве"]
   ]);
   
   document.getElementsByTagName("body")[0].appendChild(content);
@@ -812,14 +882,15 @@ function toggleHelp()
 
 function initNavigation()
 {
-  var staticHotkeys = [];
-  var jumpingHotkeys = [];
-  var navigationMode = false;
-  
   const CTRL = 1;
   const SHIFT = 2;
   const ALT = 4;
     
+  var staticHotkeys = [];
+  var jumpingHotkeys = [];
+  var navigationMode = false;
+  var timeoutId;
+  
   var addHotkey = function(hotkeys, handler, keyCode, modifier)
   {
     modifier = modifier || 0;
@@ -845,6 +916,7 @@ function initNavigation()
   
   var setStaticMode = function()
   {
+    clearTimeout(timeoutId);
     navigationMode = false;
   };
   
@@ -855,7 +927,7 @@ function initNavigation()
     if(!navigationMode)
     {
       navigationMode = true;
-      setTimeout(setStaticMode, 1000);
+      timeoutId = setTimeout(setStaticMode, 1000);
     }
   };
   
@@ -914,7 +986,10 @@ function initNavigation()
   jumpingHotkey( nav.goInbox,            73 );
   jumpingHotkey( nav.goMyThings,         77 );
   jumpingHotkey( nav.goProfile,          80 );
-  
+  jumpingHotkey( nav.goArchive,          65 );
+  jumpingHotkey( nav.goPrevPage,        219 );
+  jumpingHotkey( nav.goNextPage,        221 );
+
   var onKeydown = function(e)
   {
     e = e || window.event;
@@ -932,6 +1007,7 @@ function initNavigation()
     } 
     
     var handlers = navigationMode ? jumpingHotkeys[code] : staticHotkeys[code];
+    if(navigationMode) setStaticMode();
     
     if(handlers)
     {
@@ -981,7 +1057,7 @@ function trace(msg)
     logDiv.style.zIndex = "3";
     logDiv.style.right = "0em";
     logDiv.style.top = "0em";
-    logDiv.style.backgroundColor = "#fcc";
+    logDiv.style.backgroundColor = "#ffc";
     logDiv.style.fontSize = "12px";
     logDiv.style.padding = "1em";
     
