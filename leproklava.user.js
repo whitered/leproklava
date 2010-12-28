@@ -759,10 +759,11 @@ function createStyle()
 {
   var css = [
     ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }",
-    "#kb-help { position: fixed; background: #eee; padding: 1em 3em; z-index: 3;}",
+    "#kb-help { position: fixed; background: #eee; padding: 1em 2em; z-index: 3; font-size: 0.7em; }",
     "#kb-help h4 {margin-top: 2em; }",
     "#kb-help dt { float: left; width: 8em; font-weight: bold; }",
-    "#kb-help dd { margin: 0.5em 0; width: 40em; }"
+    "#kb-help dd { margin: 0.5em 0; width: 40em; }",
+    "#kb-help td { vertical-align: top; }"
   ].join("\n");
 
   var style = document.createElement("style");
@@ -805,7 +806,7 @@ function toggleHelp()
     return;
   }
   
-  var dlist = function(values)
+  var dlist = function(container, values)
   {
     var dl = document.createElement("dl");
     var dt;
@@ -821,26 +822,31 @@ function toggleHelp()
        dd.appendChild(document.createTextNode(values[i][1]));
        dl.appendChild(dd);
     }
-    content.appendChild(dl);
+    container.appendChild(dl);
+    return dl;
   };
   
-  var tag = function(tag, text)
+  var tag = function(container, tag, text)
   {
     var el = document.createElement(tag);
-    el.appendChild(document.createTextNode(text));
-    content.appendChild(el);
+    if(text) el.appendChild(document.createTextNode(text));
+    container.appendChild(el);
+    return el;
   };
 
   content = document.createElement("div");
   content.id = "kb-help";
-  content.className = "small";
   
-  tag("h2", "leproklava");
+  tag(content, "h2", "leproklava");
   
-  tag("p", "версия " + VERSION);
+  tag(content, "a", "версия " + VERSION).href = "http://userscripts.org/scripts/show/93588";
   
-  tag("h4", "навигация по странице");
-  dlist([
+  var tr = tag(tag(content, "table"), "tr");
+  var td1 = tag(tr, "td");
+  var td2 = tag(tr, "td");
+  
+  tag(td1, "h4", "навигация по странице");
+  dlist(td1, [
     ["h или ?", "показать/скрыть окно помощи"],
     ["p / n", "переход по комментариям или постам"],
     ["shift + p / n", "переход по новым комментариям или постам"],
@@ -857,8 +863,8 @@ function toggleHelp()
     ["c", "раскрыть комментарий, комментировать"]
   ]);
   
-  tag("h4", "навигация по сайту");
-  dlist([
+  tag(td2, "h4", "навигация по сайту");
+  dlist(td2, [
     ["g g", "главная"],
     isLepra ? ["g h", "главная подлепры"] : null,
     ["g p", "мой профиль"],
