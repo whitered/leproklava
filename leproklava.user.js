@@ -235,15 +235,6 @@ function createController()
   {
     return utils.hasClass(node, cssClass.comment) && (node.parentNode == commentsHolder);
   };
-  
-  
-  
-  // init navigation with page's target element with no visual effect
-  if(window.location.hash.length > 1)
-  {
-    var target = document.getElementById(window.location.hash.substring(1));
-    if(isComment(target)) setCurrent(target, true);
-  }
 
   
   
@@ -337,6 +328,15 @@ function createController()
     theEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
     link.dispatchEvent(theEvent);
   };
+  
+  
+  
+  // init navigation with page's target element with no visual effect
+  if(window.location.hash.length > 1)
+  {
+    var target = document.getElementById(window.location.hash.substring(1));
+    if(isComment(target)) setCurrent(target, true);
+  }
 
 
 
