@@ -713,14 +713,21 @@ function createNavigator()
     
     goInbox: function()
     {
-      go(glagne + "/my/inbox");
+      go(glagne + "/my/inbox/");
     },
     
     
     
     goMyThings: function()
     {
-      go(glagne + "/my");
+      go(glagne + "/my/");
+    },
+    
+    
+    
+    goFavourites: function()
+    {
+      go(glagne + "/my/favourites/");
     },
     
     
@@ -759,7 +766,7 @@ function createStyle()
 {
   var css = [
     ".kb-current .dt, .kb-current .comment_inner { border: 1px dashed #556E8C; }",
-    "#kb-help { position: fixed; background: #eee; padding: 1em 2em; z-index: 3; font-size: 0.7em; }",
+    "#kb-help { position: fixed; background: #eee; padding: 1em 2em; z-index: 3; font-size: 10px; }",
     "#kb-help h4 {margin-top: 2em; }",
     "#kb-help dt { float: left; width: 8em; font-weight: bold; }",
     "#kb-help dd { margin: 0.5em 0; width: 40em; }",
@@ -870,6 +877,7 @@ function toggleHelp()
     ["g p", "мой профиль"],
     ["g i", "инбоксы"],
     ["g m", "мои вещи"],
+    ["g f", "избранное"],
     ["g a", "архив"],
     ["g [", "предыдущая страница или день в архиве"],
     ["g ]", "следующая страница или день в архиве"]
@@ -991,6 +999,7 @@ function initNavigation()
   jumpingHotkey( nav.goHome,             72 );
   jumpingHotkey( nav.goInbox,            73 );
   jumpingHotkey( nav.goMyThings,         77 );
+  jumpingHotkey( nav.goFavourites,       70 );
   jumpingHotkey( nav.goProfile,          80 );
   jumpingHotkey( nav.goArchive,          65 );
   jumpingHotkey( nav.goPrevPage,        219 );
