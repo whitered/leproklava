@@ -689,7 +689,7 @@ function createNavigator()
   
   
   
-  var expr = isLepra ? "id('greetings')/a" : "//div[@class='header_tagline_inner']/a";
+  var expr = isLepra ? "id('greetings')/a" : "//div[@class='header_tagline_inner']//a";
   var profileLink = utils.getElementByXPath(expr, document);
   var profileUrl = profileLink && profileLink.href;
   var glagne = "http://" + (isLepra ? "leprosorium.ru" : window.location.host);
