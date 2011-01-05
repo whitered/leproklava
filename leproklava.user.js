@@ -331,12 +331,32 @@ function createController()
   
   
   
-  // init navigation with page's target element with no visual effect
-  if(window.location.hash.length > 1)
+  var findTarget = function(hash)
   {
-    var target = document.getElementById(window.location.hash.substring(1));
-    if(isComment(target)) setCurrent(target, true);
-  }
+    if(hash)
+    {
+      var target = document.getElementById(hash);
+      if(!target)
+      {
+        var anchors = document.anchors;
+        for (var i = 0; i < anchors.length; i++)
+        {
+          if(anchors[i].getAttribute("name") == hash)
+          {
+            target = getNext(anchors[i]);
+            break;
+          }
+        }
+      }
+    }
+    return target;
+  };
+  
+  
+  
+  // init navigation with page's target element with no visual effect
+  var target = findTarget(window.location.hash.substring(1));
+  if(target && (isComment(target) || isPost(target))) setCurrent(target, true);
 
 
 
