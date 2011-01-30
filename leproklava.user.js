@@ -675,7 +675,7 @@ function createNavigator()
     }
     else
     {
-      var md = path.match(/\/archive\/(\d{8})/) || path.match(/\/page\/(\d+)/);
+      var md = path.match(/\/archive\/(\d{8})/) || path.match(/\/pages?\/(\d+)/);
       if(!md) return;
       pagestr = md[1];
     } 
