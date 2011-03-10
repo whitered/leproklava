@@ -125,7 +125,8 @@ function createController()
     comment:        isLepra ? "post" : "comment",
     headComment:    "indent_0",
     newComment:     "new",
-    hiddenComment:  "shrinked"
+    hiddenComment:  "shrinked",
+    mineComment:    "mine"
   };
   
   var xpath = isLepra ? 
@@ -418,6 +419,46 @@ function createController()
           node = getPrev(node);
         }
         while(node && !utils.hasClass(node, cssClass.newComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goPrev();
+      }
+    },
+
+
+
+    goNextMine: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getNext(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.mineComment));
+        if(node) moveTo(node);
+      }
+      else
+      {
+        ctrl.goNext();
+      }
+    },
+    
+    
+    
+    goPrevMine: function()
+    {
+      if(insidePost)
+      {
+        var node = current || head;
+        do
+        {
+          node = getPrev(node);
+        }
+        while(node && !utils.hasClass(node, cssClass.mineComment));
         if(node) moveTo(node);
       }
       else
@@ -868,6 +909,7 @@ function toggleHelp()
     ["p / n", "переход по комментариям или постам"],
     ["shift + p / n", "переход по новым комментариям или постам"],
     ["k / j", "переход по новым комментариям или постам"],
+    ["shift + k / j", "переход по моим комментариям"],
     ["[ / ]", "переход по комментариям 1-го уровня или постам"],
     ["shift + [ / ]", "переход по комментариям с картинкой"],
     ["l", "родительский комментарий"],
@@ -985,6 +1027,8 @@ function initNavigation()
   staticHotkey( controller.goNextNew,       74 );
   staticHotkey( controller.goPrevHead,     219 );
   staticHotkey( controller.goNextHead,     221 );
+  staticHotkey( controller.goPrevMine,      75 , SHIFT);
+  staticHotkey( controller.goNextMine,      74 , SHIFT);
   staticHotkey( controller.goPrevPicture,  219 , SHIFT);
   staticHotkey( controller.goNextPicture,  221 , SHIFT);
   staticHotkey( controller.goBack,          66 );
