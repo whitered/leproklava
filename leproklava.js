@@ -5,11 +5,12 @@
 // @include        http://*.dirty.ru/*
 // @include        http://leprosorium.ru/*
 // @include        http://*.leprosorium.ru/*
+// @version        0.4
 // ==/UserScript==
 
 (function(){
 
-const VERSION = "0.3";
+const VERSION = "0.4";
 var isLepra = window.location.hostname.indexOf("leprosorium.ru") >= 0;
 
 var utils = {
